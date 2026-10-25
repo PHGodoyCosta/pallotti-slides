@@ -106,6 +106,7 @@
 | `Caminhos(dados, config, logs)`, `Configuracoes`, `ConfigTipografia(fonte_min, fonte_max, max_linhas)`, `LocalizadorFonte` | `Paths(data, config, logs)`, `Settings`, `TypographyConfig(min_font, max_font, max_lines)`, `FontLocator` |
 | `ErroPallotti`, `ErroLLM`, `ErroDownload`, `ErroModelo`, `ErroConversaoPdf` | `PallottiError`, `LLMError`, `DownloadError`, `TemplateError`, `PdfConversionError` |
 | onde ficam os erros | `domain/errors.py` (`PallottiError`), `llm/errors.py` (`LLMError`), `leaflet/errors.py` (`LeafletError`), `db/repositories.py` (`DuplicateError`, `NotFoundError`), `presentation/errors.py` (`TemplateError`, `PdfConversionError`) |
+| auxiliares do M3 | `BodyFormat`, `read_body_format()`, `song_area()` (presentation); `MassHistory`, `make_mass_generator()`, `load_mass()` (application/generate_mass.py); `contact_sheet()`, `pdf_page_count()` (presentation/preview.py, pdf.py); `pallotti generate --no-pdf --template` |
 | ferramentas do modelo para o CLI | `application/template_tools.py` (`TemplateTools`) |
 | convenções de `presentation/` | `TemplateSlide.index` começa em 0; `Box` em EMU (`presentation/measurer.py`) |
 | `PALLOTTI_FONTES_DIR`, `PALLOTTI_DB_URL` | `PALLOTTI_FONTS_DIR`, `PALLOTTI_DB_URL` |

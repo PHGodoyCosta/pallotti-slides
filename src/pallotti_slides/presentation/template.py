@@ -10,6 +10,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal, Self
 
+from lxml.etree import _Element
 from pptx import Presentation
 from pptx.shapes.autoshape import Shape
 from pptx.shapes.base import BaseShape
@@ -18,7 +19,12 @@ from pptx.slide import Slide
 from pallotti_slides.domain.enums import EucharisticPrayer, SongMoment
 from pallotti_slides.domain.models import Notice
 from pallotti_slides.presentation.errors import TemplateError
-from pallotti_slides.presentation.measurer import Box
+from pallotti_slides.presentation.measurer import (
+    EMU_PER_POINT,
+    BodyFormat,
+    Box,
+    song_area,
+)
 
 TAG_PREFIX = "@pallotti"
 SECOND_READING_GROUP = "segunda_leitura"
@@ -60,6 +66,10 @@ MYSTERY_FIELD = "liturgy.mystery_of_faith"
 Level = Literal["info", "warning", "error"]
 _TEXT_TAG = re.compile(r"\{\{(.*?)\}\}")
 _PRAYER_BY_ID = {prayer.value: prayer for prayer in EucharisticPrayer}
+_A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+DEFAULT_SLIDE_SIZE = (12192000, 6858000)  # 16:9, EMU
+# Insets of a:bodyPr when the attribute is absent (OOXML defaults), in EMU.
+_DEFAULT_INSETS = {"lIns": 91440, "rIns": 91440, "tIns": 45720, "bIns": 45720}
 
 
 class TagKind(StrEnum):
@@ -145,6 +155,7 @@ class TemplateSlide:
     text_box: Box | None = None
     unknown_tags: tuple[str, ...] = field(default=())
     split_tags: tuple[str, ...] = field(default=())
+    body_format: BodyFormat | None = None  # paragraph/frame settings of ``{{canto.texto}}``
 
 
 def default_template_path() -> Path:
@@ -155,9 +166,15 @@ def default_template_path() -> Path:
 class MassTemplate:
     """The tagged template, read once into memory (the file is never modified)."""
 
-    def __init__(self, path: Path, slides: list[TemplateSlide]) -> None:
+    def __init__(
+        self,
+        path: Path,
+        slides: list[TemplateSlide],
+        slide_size: tuple[int, int] = DEFAULT_SLIDE_SIZE,
+    ) -> None:
         self.path = path
         self.slides = slides
+        self.slide_width, self.slide_height = slide_size
 
     @classmethod
     def load(cls, path: Path | None = None) -> Self:
@@ -169,7 +186,33 @@ class MassTemplate:
         except Exception as error:  # python-pptx raises many kinds of errors on bad files
             raise TemplateError(f"Não foi possível abrir o modelo {path.name}: {error}") from error
         slides = [_read_slide(index, slide) for index, slide in enumerate(presentation.slides)]
-        return cls(path, slides)
+        width = int(presentation.slide_width or DEFAULT_SLIDE_SIZE[0])
+        height = int(presentation.slide_height or DEFAULT_SLIDE_SIZE[1])
+        return cls(path, slides, (width, height))
+
+    def prototype(self, moment: SongMoment) -> TemplateSlide | None:
+        """The song prototype slide of ``moment`` (``@pallotti canto=...``)."""
+        for slide in self.slides:
+            if slide.tag.kind is TagKind.SONG and slide.tag.moment is moment:
+                return slide
+        return None
+
+    def song_area(self, moment: SongMoment) -> Box:
+        """Area for the song body of ``moment`` (see ``measurer.song_area``)."""
+        prototype = self.prototype(moment)
+        if prototype is None or prototype.text_box is None:
+            tag = MOMENT_TAGS[moment]
+            raise TemplateError(
+                f"O modelo não tem o protótipo de canto '{tag}' com {{{{canto.texto}}}}."
+            )
+        return song_area(prototype.text_box, self.slide_height)
+
+    def body_format(self, moment: SongMoment) -> BodyFormat:
+        """Paragraph/frame settings of the song body of ``moment``."""
+        prototype = self.prototype(moment)
+        if prototype is None or prototype.body_format is None:
+            return BodyFormat()
+        return prototype.body_format
 
     def available_prayers(self) -> list[EucharisticPrayer]:
         """Eucharistic prayers that have a block in the template, in numeric order."""
@@ -249,6 +292,48 @@ def _first_notes_line(slide: Slide) -> str | None:
     return None
 
 
+def _emu_pt(value: str | None, default: int) -> float:
+    return (int(value) if value is not None else default) / EMU_PER_POINT
+
+
+def _spacing_pt(ppr: _Element | None, name: str) -> float | None:
+    """``a:spcBef``/``a:spcAft``/``a:lnSpc`` given in points (``spcPts``), if any."""
+    if ppr is None:
+        return None
+    points = ppr.find(f"{_A}{name}/{_A}spcPts")
+    return int(points.get("val", "0")) / 100 if points is not None else None
+
+
+def read_body_format(text_body: _Element, paragraph: _Element) -> BodyFormat:
+    """``BodyFormat`` of ``paragraph`` (``a:p``) inside ``text_body`` (``p:txBody``).
+
+    Only values written in the slide are read; absent ones take the OOXML defaults (100 %
+    line spacing, no paragraph spacing, no indent).
+    """
+    body_pr = text_body.find(f"{_A}bodyPr")
+    insets = {
+        name: _emu_pt(body_pr.get(name) if body_pr is not None else None, default)
+        for name, default in _DEFAULT_INSETS.items()
+    }
+    ppr = paragraph.find(f"{_A}pPr")
+    line_spacing = 1.0
+    percent = ppr.find(f"{_A}lnSpc/{_A}spcPct") if ppr is not None else None
+    if percent is not None:
+        line_spacing = int(percent.get("val", "100000")) / 100000
+    return BodyFormat(
+        line_spacing=line_spacing,
+        line_spacing_pt=_spacing_pt(ppr, "lnSpc"),
+        space_before_pt=_spacing_pt(ppr, "spcBef") or 0.0,
+        space_after_pt=_spacing_pt(ppr, "spcAft") or 0.0,
+        margin_left_pt=_emu_pt(ppr.get("marL") if ppr is not None else None, 0),
+        indent_pt=_emu_pt(ppr.get("indent") if ppr is not None else None, 0),
+        inset_left_pt=insets["lIns"],
+        inset_right_pt=insets["rIns"],
+        inset_top_pt=insets["tIns"],
+        inset_bottom_pt=insets["bIns"],
+    )
+
+
 def _shape_box(shape: BaseShape) -> Box | None:
     if None in (shape.left, shape.top, shape.width, shape.height):
         return None
@@ -266,6 +351,7 @@ def _read_slide(index: int, slide: Slide) -> TemplateSlide:
     unknown: list[str] = []
     split: list[str] = []
     text_box: Box | None = None
+    body_format: BodyFormat | None = None
     for shape in slide.shapes:
         if not isinstance(shape, Shape) or not shape.has_text_frame:
             continue
@@ -281,6 +367,7 @@ def _read_slide(index: int, slide: Slide) -> TemplateSlide:
                 fields.add(known)
                 if known == SONG_TEXT_FIELD and text_box is None:
                     text_box = _shape_box(shape)
+                    body_format = read_body_format(shape.text_frame._txBody, paragraph._p)
             if len(whole) != len(whole_in_run):
                 split.extend(name for name in whole if name not in whole_in_run)
     return TemplateSlide(
@@ -290,4 +377,5 @@ def _read_slide(index: int, slide: Slide) -> TemplateSlide:
         text_box=text_box,
         unknown_tags=tuple(unknown),
         split_tags=tuple(split),
+        body_format=body_format,
     )

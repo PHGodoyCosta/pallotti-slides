@@ -50,6 +50,21 @@ def default_db_url(paths: Paths | None = None, env: Mapping[str, str] | None = N
 
 
 @dataclass(frozen=True)
+class TypographyConfig:
+    """Song typography (SPEC F9): one size per song, from ``max_font`` down to ``min_font``."""
+
+    min_font: int = 40
+    max_font: int = 54
+    max_lines: int = 6
+
+    def __post_init__(self) -> None:
+        if not 0 < self.min_font <= self.max_font:
+            raise ValueError("min_font deve ser positivo e menor ou igual a max_font")
+        if self.max_lines < 1:
+            raise ValueError("max_lines deve ser pelo menos 1")
+
+
+@dataclass(frozen=True)
 class FoundFonts:
     """Aptos TTF files; ``None`` when not found."""
 

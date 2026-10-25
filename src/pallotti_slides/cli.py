@@ -7,6 +7,7 @@ from typing import Annotated
 import typer
 
 from pallotti_slides import __version__
+from pallotti_slides.application.generate_mass import load_mass, make_mass_generator
 from pallotti_slides.application.leaflet_extraction import (
     extract_leaflet,
     make_leaflet_extractor,
@@ -71,6 +72,35 @@ def diagnose() -> None:
     font_hint = "Instale a Aptos (download gratuito da Microsoft) ou defina PALLOTTI_FONTS_DIR."
     typer.echo(_line("Aptos regular", fonts.regular, font_hint))
     typer.echo(_line("Aptos negrito", fonts.bold, font_hint))
+
+
+@app.command(
+    "generate",
+    help="Gera o PowerPoint e o PDF de uma missa a partir de um arquivo JSON.",
+)
+def generate(
+    mass: Annotated[
+        Path,
+        typer.Option("--mass", help="Arquivo JSON da missa.", exists=True, dir_okay=False),
+    ],
+    output: Annotated[Path, typer.Option("--output", help="Pasta de saída.", file_okay=False)],
+    template: TemplateOption = None,
+    pdf: Annotated[
+        bool, typer.Option("--pdf/--no-pdf", help="Gerar também o PDF (LibreOffice).")
+    ] = True,
+) -> None:
+    """Generate the .pptx (and .pdf) of a Mass; exit 1 on a fatal error."""
+    try:
+        generator = make_mass_generator(template, with_pdf=pdf)
+        result = generator.generate(load_mass(mass), output)
+    except PallottiError as error:
+        typer.echo(f"ERRO: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"PowerPoint: {result.pptx}")
+    typer.echo(f"PDF: {result.pdf if result.pdf else '(não gerado)'}")
+    for notice in result.notices:
+        where = f" [{notice.field}]" if notice.field else ""
+        typer.echo(f"{notice.level.upper()}{where}: {notice.message}", err=True)
 
 
 _LEAFLET_FIELDS = (
