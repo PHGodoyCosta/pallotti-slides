@@ -70,7 +70,8 @@
 |---|---|
 | `BaixadorLetra` (`suporta`, `baixar`), `LetraBruta(titulo, artista, texto, fonte, url)` | `LyricsDownloader` (`supports`, `download`), `RawLyrics(title, artist, text, source, url)` |
 | `BaixadorLetrasMus`, `BaixadorCifraClub` | `LetrasMusDownloader`, `CifraClubDownloader` |
-| `AnalisadorLetra.analisar()`, `DetectorRefrao` | `LyricsParser.parse()`, `ChorusDetector` |
+| `AnalisadorLetra.analisar()`, `DetectorRefrao` | `LyricsParser.parse() -> tuple[Song, list[Notice]]`, `ChorusDetector.detect()`, `ChorusIds` (resposta do LLM) |
+| detecção do tipo de pedido; remoção de acordes | `detect_request_kind()` (`songs/parser.py`), `strip_chords()` (`songs/downloaders.py`) |
 | `InterpretadorPedido.interpretar()` | `RequestInterpreter.interpret()` |
 | `BuscadorWebCantos.buscar()`, `CandidatoCanto(titulo, artista, url)` | `WebSongSearcher.search()`, `SongCandidate(title, artist, url)` |
 | `ResolvedorCantos` (`resolver`, `confirmar`), `ResultadoResolucao(canto, origem, candidatos, avisos)` | `SongResolver` (`resolve`, `confirm`), `ResolutionResult(song, origin, candidates, notices)` |

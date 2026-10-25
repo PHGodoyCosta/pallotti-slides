@@ -10,8 +10,8 @@
 | M2 | ▶️ | — | 2026-10-24 | Sonnet high; padrões provisórios (M2-a..d) até o portão |
 | M3 | ☐ | — | — | — |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
-| M5 | ⏸ | — | 2026-10-24 | aguarda P3 |
-| M6 | 🧑 parcial | (este commit) | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
+| M5 | ⏸ parcial | (este commit) | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
+| M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M7 | ☐ | — | — | — |
 | M8 | ☐ | — | — | — |
 | M9 | ☐ | — | — | — |
@@ -35,6 +35,7 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
+- M5b: rótulos de seção do Cifra Club ("[Intro]", "[Primeira Parte]") — decidir com o HTML real; letra de estrofe única sem marcação sai como verso + aviso
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)
