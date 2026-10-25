@@ -1,0 +1,168 @@
+{
+  "title": "Tu És Minha Vida, Outro Deus Não Ha",
+  "artist": "Ministerio Gratia Plena",
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/ministerio-gratia-plena/tu-es-minha-vida-outro-deus-nao-ha/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Tu és minha vida, outro Deus não há!",
+          "bold": false
+        },
+        {
+          "text": "Tu és minha estrada, a minha verdade",
+          "bold": false
+        },
+        {
+          "text": "Em tua palavra eu caminharei",
+          "bold": false
+        },
+        {
+          "text": "Enquanto eu viver e até quando tu quiseres",
+          "bold": false
+        },
+        {
+          "text": "Já não sentirei temor, pois, estás aqui",
+          "bold": false
+        },
+        {
+          "text": "Tu estás no meio de nós",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Creio em Ti, Senhor, vindo de Maria",
+          "bold": false
+        },
+        {
+          "text": "Filho eterno e Santo, homem como nós",
+          "bold": false
+        },
+        {
+          "text": "Tu morreste por amor; vivo estás em nós",
+          "bold": false
+        },
+        {
+          "text": "Unidade trina com o Espírito e o Pai",
+          "bold": false
+        },
+        {
+          "text": "E um dia eu bem sei: tu retornarás",
+          "bold": false
+        },
+        {
+          "text": "E abrirás o reino dos céus",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Tu és minha força, outro Deus não há!",
+          "bold": false
+        },
+        {
+          "text": "Tu és minha paz, minha liberdade",
+          "bold": false
+        },
+        {
+          "text": "Nada nesta vida nos separará",
+          "bold": false
+        },
+        {
+          "text": "Em tuas mãos seguras minha vida guardarás",
+          "bold": false
+        },
+        {
+          "text": "Eu não temerei o mal, tu me livrarás",
+          "bold": false
+        },
+        {
+          "text": "E no teu perdão viverei!",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Ó, Senhor da vida, creio sempre em ti!",
+          "bold": false
+        },
+        {
+          "text": "Filho Salvador, eu espero em ti!",
+          "bold": false
+        },
+        {
+          "text": "Santo Espírito de amor: desce sobre nós",
+          "bold": false
+        },
+        {
+          "text": "Tu, de mil caminhos, nos conduzes a uma fé",
+          "bold": false
+        },
+        {
+          "text": "E por mil estradas onde andarmos nós",
+          "bold": false
+        },
+        {
+          "text": "Qual semente nos levarás!",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Tu estás no meio de nós",
+          "bold": false
+        },
+        {
+          "text": "E abrirás o reino dos céus",
+          "bold": false
+        },
+        {
+          "text": "E no teu perdão viverei!",
+          "bold": false
+        },
+        {
+          "text": "Qual semente nos levarás!",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Tu és minha vida, outro Deus não há!",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ]
+}

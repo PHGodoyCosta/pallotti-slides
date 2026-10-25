@@ -1,0 +1,80 @@
+{
+  "title": "Um Coração Para Amar",
+  "artist": "Padre Zezinho",
+  "source": "letras_mus",
+  "source_url": "https://www.letras.mus.br/padre-zezinho/um-coracao-para-amar/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Um coração para amar, pra perdoar e sentir",
+          "bold": false
+        },
+        {
+          "text": "Para chorar e sorrir, ao me criar Tu me destes",
+          "bold": false
+        },
+        {
+          "text": "Um coração pra sonhar, inquieto e sempre a bater",
+          "bold": false
+        },
+        {
+          "text": "Ansioso por entender as coisas que Tu disseste",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "Eis o que eu venho Te dar",
+          "bold": true
+        },
+        {
+          "text": "Eis o que eu ponho no altar",
+          "bold": true
+        },
+        {
+          "text": "Toma, Senhor, que ele é Teu",
+          "bold": true
+        },
+        {
+          "text": "Meu coração não é meu",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Quero que o meu coração seja tão cheio de paz",
+          "bold": false
+        },
+        {
+          "text": "Que não se sinta capaz de sentir ódio ou rancor",
+          "bold": false
+        },
+        {
+          "text": "Quero que a minha oração possa me amadurecer",
+          "bold": false
+        },
+        {
+          "text": "Leve-me a compreender as consequências do amor",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    2
+  ]
+}

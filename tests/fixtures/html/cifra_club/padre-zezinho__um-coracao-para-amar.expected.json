@@ -1,0 +1,126 @@
+{
+  "title": "Um Coração Para Amar",
+  "artist": "Padre Zezinho",
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/padre-zezinho/um-coracao-para-amar/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Um coração para amar",
+          "bold": false
+        },
+        {
+          "text": "Pra perdoar e sentir",
+          "bold": false
+        },
+        {
+          "text": "Para chorar e sorrir",
+          "bold": false
+        },
+        {
+          "text": "Ao me criar tu me deste",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Um coração pra sonhar",
+          "bold": false
+        },
+        {
+          "text": "Inquieto e sempre a bater",
+          "bold": false
+        },
+        {
+          "text": "Ansioso por entender",
+          "bold": false
+        },
+        {
+          "text": "As coisas que tu disseste",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "Eis o que eu venho te dar",
+          "bold": true
+        },
+        {
+          "text": "Eis o que eu ponho no altar",
+          "bold": true
+        },
+        {
+          "text": "Toma senhor que ele é teu",
+          "bold": true
+        },
+        {
+          "text": "Meu coração não é meu",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Quero que o meu coração",
+          "bold": false
+        },
+        {
+          "text": "Seja tão cheio de paz",
+          "bold": false
+        },
+        {
+          "text": "Que não se sinta capaz",
+          "bold": false
+        },
+        {
+          "text": "De sentir ódio ou rancor",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Quero que a minha oração",
+          "bold": false
+        },
+        {
+          "text": "Possa me amadurecer",
+          "bold": false
+        },
+        {
+          "text": "Leve-me a compreender",
+          "bold": false
+        },
+        {
+          "text": "As consequências do amor",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    3
+  ]
+}

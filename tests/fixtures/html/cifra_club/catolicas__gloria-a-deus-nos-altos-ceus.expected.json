@@ -1,0 +1,111 @@
+{
+  "title": "Glória a Deus Nos Altos Céus",
+  "artist": null,
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/catolicas/gloria-a-deus-nos-altos-ceus/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Glória a Deus nos altos céus, paz na terra a seus amados",
+          "bold": false
+        },
+        {
+          "text": "A vós louvam rei celeste, os que foram libertados",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "Glória a Deus, lá nos céus, e paz aos seus amém!",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Deus e pai nós vos louvamos, adoramos bendizemos",
+          "bold": false
+        },
+        {
+          "text": "Damos glória ao vosso nome, vossos dons agradecemos",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Senhor nosso Jesus Cristo, unigênito do pai",
+          "bold": false
+        },
+        {
+          "text": "Vós, de Deus cordeiro santo, nossas culpas perdoai",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Vós, que estais junto do Pai, como nosso intercessor",
+          "bold": false
+        },
+        {
+          "text": "Acolhei nossos pedidos, atendei nosso clamor",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Vós somente sois o santo, o altíssimo o Senhor",
+          "bold": false
+        },
+        {
+          "text": "Com espírito divino de Deus pai no esplendor",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Glória a Deus, lá nos céus,e paz aos seus. amém! Amém",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    2,
+    4,
+    2,
+    5,
+    2,
+    6,
+    2,
+    7
+  ]
+}

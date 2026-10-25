@@ -11,7 +11,7 @@
 | M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado; ajustes aplicados (M3-fix) |
 | M3b | ▶️ | — | 2026-10-24 | depois do M3; cache automático de cantos |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
-| M5 | ▶️ M5b | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
+| M5 | ✅ | (este commit) | 2026-10-25 | M5a + M5b; expected.json gerados pelo pipeline e conferidos (Pedro pode revisar) |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M6b | ✅ | (ver log) | 2026-10-24 | gpt-6-astra padrão; live pula sem OPENAI_API_KEY |
 | M6c | ▶️ | — | 2026-10-25 | migrar llm/ para LangChain |
@@ -52,8 +52,6 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
-- M5b: strip_chords não remove linhas de acordes com caractere invisível \u200b (HTML do Cifra Club); rótulos [Intro]/[Primeira Parte]/"Parte 1 de 2" e sílabas esticadas ("liberta..dos") precisam de limpeza. Visto na missa de 25/10
-- M5b: rótulos de seção do Cifra Club ("[Intro]", "[Primeira Parte]") — decidir com o HTML real; letra de estrofe única sem marcação sai como verso + aviso
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)

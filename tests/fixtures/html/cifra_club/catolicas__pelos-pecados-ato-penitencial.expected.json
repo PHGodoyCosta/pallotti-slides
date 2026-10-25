@@ -1,0 +1,78 @@
+{
+  "title": "Pelos Pecados - Ato Penitencial",
+  "artist": null,
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/catolicas/pelos-pecados-ato-penitencial/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Pelos pecados, erros passados",
+          "bold": false
+        },
+        {
+          "text": "Por divisões na tua igreja, ó Jesus",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "/*Senhor piedade Senhor piedade Senhor piedade piedade de nós*/",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Quem não te aceita, quem te rejeita",
+          "bold": false
+        },
+        {
+          "text": "Podes não crer por ver cristãos que vivem mal",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "/*Cristo piedade, Cristo piedade, Cristo piedade piedade de nós*/",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Hoje se a vida é tão sofrida",
+          "bold": false
+        },
+        {
+          "text": "Deve-se a culpa a indiferença dos cristãos",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    2
+  ]
+}

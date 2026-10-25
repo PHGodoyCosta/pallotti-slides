@@ -1,0 +1,102 @@
+{
+  "title": "O Povo de Deus",
+  "artist": "Padre Zezinho",
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/padre-zezinho/o-povo-de-deus/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O povo de Deus no deserto andava, mas à sua frente alguém caminhava",
+          "bold": false
+        },
+        {
+          "text": "O povo de Deus era rico em nada, só tinha esperança e o pó da estrada",
+          "bold": false
+        },
+        {
+          "text": "Também sou teu povo, Senhor, estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Somente a tua graça me basta e mais nada",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O Povo de Deus também vacilava, e às vezes custava a crer no amor",
+          "bold": false
+        },
+        {
+          "text": "O Povo de Deus, chorando rezava, pedia perdão e recomeçava",
+          "bold": false
+        },
+        {
+          "text": "Também sou teu povo, Senhor, estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Perdoa se às vezes não creio em mais nada",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O Povo de Deus também teve fome e Tu lhe mandaste o pão lá do céu",
+          "bold": false
+        },
+        {
+          "text": "O Povo de Deus, cantando, deu graças, provou teu amor, teu amor que não passa",
+          "bold": false
+        },
+        {
+          "text": "Também sou teu povo, Senhor, estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Tu és alimento na longa jornada",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O Povo de Deus ao longe avistou a terra querida que o Amor preparou",
+          "bold": false
+        },
+        {
+          "text": "O Povo de Deus corria e cantava e, nos seu louvores, Teu poder proclamava",
+          "bold": false
+        },
+        {
+          "text": "Também sou teu povo, Senhor, estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Cada dia mais perto da terra esperada",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    4
+  ]
+}

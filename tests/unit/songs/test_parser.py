@@ -76,9 +76,10 @@ def test_fixture_songs_roundtrip(moment: object) -> None:
     expected = SONGS[moment]  # type: ignore[index]
     song, notices = _parser().parse(_raw(_pasted(expected)))
     assert [s.type for s in song.stanzas] == [s.type for s in expected.stanzas]
-    assert [[line.text for line in s.lines] for s in song.stanzas] == [
-        [line.text for line in s.lines] for s in expected.stanzas
-    ]
+    expected_lines = [[line.text for line in s.lines] for s in expected.stanzas]
+    if moment == "penitential_act":  # repeated block shown once, marked as repeatable (F6)
+        expected_lines[1] = ["/*Senhor piedade! Cristo, piedade!", "Tem piedade ó Senhor!*/"]
+    assert [[line.text for line in s.lines] for s in song.stanzas] == expected_lines
     assert song.order == expected.order
     for stanza in song.stanzas:  # chorus = bold; the verse-line highlight is not inferred
         assert all(line.bold for line in stanza.lines) == (stanza.type is StanzaType.CHORUS)
@@ -121,6 +122,27 @@ def test_repeated_stanza_is_one_chorus_and_spaces_are_normalized() -> None:
     assert song.order == [1, 2, 3, 2]
     assert song.stanzas[1].type is StanzaType.CHORUS
     assert song.stanzas[1].lines[0].text == "Coro, lá"
+    assert notices == []
+
+
+def test_consecutive_equal_ids_collapse_in_order() -> None:
+    text = "a\n\nb\n\nc\n\nc\n\nd\n\ne\n\nc\n\nc\n\nc"
+    song, _ = _parser().parse(_raw(text))
+    assert song.order == [1, 2, 3, 4, 5, 3]
+    song, _ = _parser().parse(_raw("a\n\nb\n\nc\n\nd\n\ne\n\nb\n\nb"))
+    assert song.order == [1, 2, 3, 4, 5, 2]
+
+
+def test_reference_next_to_same_chorus_collapses() -> None:
+    song, _ = _parser().parse(_raw("Refrão:\nCoro\n\n(Refrão)\n\nVerso\nx"))
+    assert song.order == [1, 2]
+
+
+def test_stanza_with_repeated_block_is_bold_chorus() -> None:
+    song, notices = _parser().parse(_raw("Verso\nlinha\n\nSenhor piedade\nSenhor piedade\nOutra"))
+    assert [s.type for s in song.stanzas] == [StanzaType.VERSE, StanzaType.CHORUS]
+    assert [line.text for line in song.stanzas[1].lines] == ["/*Senhor piedade*/", "Outra"]
+    assert all(line.bold for line in song.stanzas[1].lines)
     assert notices == []
 
 
@@ -193,3 +215,41 @@ def test_metadata_is_carried_to_song() -> None:
 )
 def test_detect_request_kind(text: str, kind: str) -> None:
     assert detect_request_kind(text) == kind
+
+
+def test_bracket_marker_block_marks_next_stanza_as_chorus() -> None:
+    text = (
+        "Verso\nlinha\n\n[Refrão]\n\nCoro a\nCoro b\n\nOutro verso\nlinha\n\n"
+        "[Refrão Final]\n\nCoro a\nCoro b"
+    )
+    song, notices = _parser().parse(_raw(text))
+    assert [s.type for s in song.stanzas] == [StanzaType.VERSE, StanzaType.CHORUS, StanzaType.VERSE]
+    assert song.order == [1, 2, 3, 2]
+    assert [line.text for line in song.stanzas[1].lines] == ["Coro a", "Coro b"]
+    assert notices == []
+
+
+def test_final_bracket_marker_with_nothing_after_is_a_reference() -> None:
+    song, _ = _parser().parse(_raw("Refrão:\nCoro\n\nVerso\n\n[Refrão]"))
+    assert song.order == [1, 2, 1]
+
+
+def test_block_repeated_in_sequence_appears_once_with_repeat_marks() -> None:
+    text = (
+        "Refrão:\nSenhor piedade\nSenhor piedade\nPra fazer\nPra viver\nPra fazer\nPra viver\nFim"
+    )
+    song, _ = _parser().parse(_raw(text))
+    assert [line.text for line in song.stanzas[0].lines] == [
+        "/*Senhor piedade*/",
+        "/*Pra fazer",
+        "Pra viver*/",
+        "Fim",
+    ]
+
+
+def test_prolongations_are_cleaned_in_pasted_text() -> None:
+    song, _ = _parser().parse(_raw("os que foram liberta..dos\nnossas culpas perdoa....ai"))
+    assert [line.text for line in song.stanzas[0].lines] == [
+        "os que foram libertados",
+        "nossas culpas perdoai",
+    ]

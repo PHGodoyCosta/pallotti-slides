@@ -1,0 +1,193 @@
+{
+  "title": "O Povo de Deus",
+  "artist": "Padre Zezinho",
+  "source": "letras_mus",
+  "source_url": "https://www.letras.mus.br/padre-zezinho/o-povo-de-deus/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O povo de Deus no deserto andava",
+          "bold": false
+        },
+        {
+          "text": "Mas à sua frente Alguém caminhava",
+          "bold": false
+        },
+        {
+          "text": "O povo de Deus era rico de nada",
+          "bold": false
+        },
+        {
+          "text": "Só tinha a esperança e o pó da estrada",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Também sou Teu povo, Senhor",
+          "bold": false
+        },
+        {
+          "text": "E estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Somente a Tua graça me basta e mais nada!",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O povo de Deus também vacilava",
+          "bold": false
+        },
+        {
+          "text": "Às vezes custava a crer no amor",
+          "bold": false
+        },
+        {
+          "text": "O povo de Deus, chorando, rezava",
+          "bold": false
+        },
+        {
+          "text": "Pedia perdão e recomeçava",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Também sou Teu povo, Senhor",
+          "bold": false
+        },
+        {
+          "text": "E estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Perdoa se, às vezes, não creio em mais nada!",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O povo de Deus também teve fome",
+          "bold": false
+        },
+        {
+          "text": "E Tu lhe mandaste o pão lá do céu",
+          "bold": false
+        },
+        {
+          "text": "O povo de Deus, cantando, deu graças",
+          "bold": false
+        },
+        {
+          "text": "Provou Teu amor, Teu amor que não passa",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Também sou Teu povo, Senhor",
+          "bold": false
+        },
+        {
+          "text": "E estou nessa estrada",
+          "bold": false
+        },
+        {
+          "text": "Tu és alimento na longa jornada!",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O povo de Deus ao longe avistou",
+          "bold": false
+        },
+        {
+          "text": "A terra querida que o amor preparou",
+          "bold": false
+        },
+        {
+          "text": "O povo de Deus corria e cantava",
+          "bold": false
+        },
+        {
+          "text": "E nos seus louvores, Teu poder proclamava",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "Também sou Teu povo, Senhor",
+          "bold": true
+        },
+        {
+          "text": "E estou nessa estrada",
+          "bold": true
+        },
+        {
+          "text": "Cada dia mais perto da terra esperada!",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Também sou Teu povo, Senhor",
+          "bold": false
+        },
+        {
+          "text": "E estou nessa estrada",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ]
+}

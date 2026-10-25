@@ -1,0 +1,57 @@
+{
+  "title": "Eis-me Aqui, Senhor",
+  "artist": null,
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/catolicas/eis-me-aqui-senhor/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "chorus",
+      "lines": [
+        {
+          "text": "/*Eis-me aqui, Senhor!*/",
+          "bold": true
+        },
+        {
+          "text": "/*Pra fazer tua vontade",
+          "bold": true
+        },
+        {
+          "text": "Pra viver no Teu amor*/",
+          "bold": true
+        },
+        {
+          "text": "Eis-me aqui, Senhor!",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "O Senhor é o Pastor que me conduz",
+          "bold": false
+        },
+        {
+          "text": "Por caminhos nunca vistos me enviou",
+          "bold": false
+        },
+        {
+          "text": "Sou chamado a ser fermento sal e luz",
+          "bold": false
+        },
+        {
+          "text": "E por isso respondi: aqui estou!",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    1
+  ]
+}

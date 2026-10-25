@@ -1,0 +1,101 @@
+{
+  "title": "Ave Maria",
+  "artist": "Chitãozinho & Xororó",
+  "source": "cifra_club",
+  "source_url": "https://www.cifraclub.com.br/chitaozinho-e-xororo/ave-maria/",
+  "stanzas": [
+    {
+      "id": 1,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Ave Maria",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Mãe abençoada, Virgem imaculada",
+          "bold": false
+        },
+        {
+          "text": "És santa semente do amor",
+          "bold": false
+        },
+        {
+          "text": "Maria, Mãe de Deus, és cheia de graça",
+          "bold": false
+        },
+        {
+          "text": "Santo é o fruto do teu ventre, Jesus",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Av e Maria",
+          "bold": false
+        },
+        {
+          "text": "Ave Maria",
+          "bold": false
+        },
+        {
+          "text": "Maria",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Que concebeu amor",
+          "bold": false
+        },
+        {
+          "text": "Em Cristo, Nosso Senhor",
+          "bold": false
+        },
+        {
+          "text": "Madre generosa, rogai por nós",
+          "bold": false
+        },
+        {
+          "text": "Os pecadores, Mãe querida",
+          "bold": false
+        },
+        {
+          "text": "Amém",
+          "bold": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "verse",
+      "lines": [
+        {
+          "text": "Amém",
+          "bold": false
+        }
+      ]
+    }
+  ],
+  "order": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ]
+}

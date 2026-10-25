@@ -10,16 +10,19 @@ from pallotti_slides.domain.errors import PallottiError
 from pallotti_slides.domain.models import Line, Notice, Song, Stanza
 from pallotti_slides.domain.text import looks_like_url, normalize_search
 from pallotti_slides.llm.client import LLMClient
-from pallotti_slides.songs.downloaders import RawLyrics
+from pallotti_slides.songs.downloaders import RawLyrics, clean_prolongations
 
 _NAME = r"refr[aã]o|ref\.?|r"
 # Marker at the start of a stanza: "[Refrão]", "(Refrão)", "Refrão:", "Ref.:", "R:", "Refrão".
 _MARKER = re.compile(
-    rf"^\s*(?:\[\s*refr[aã]o\s*\]|\(\s*refr[aã]o\s*\)|(?:{_NAME})\s*:|refr[aã]o\s*$)\s*(.*)$",
+    rf"^\s*(?:\[\s*refr[aã]o(?:\s+final)?\s*\]|\(\s*refr[aã]o\s*\)|(?:{_NAME})\s*:|refr[aã]o\s*$)\s*(.*)$",
     re.IGNORECASE,
 )
 # A line that only points to the chorus: "Refrão", "(Refrão)", "[Refrão]", "Refrão:".
 _REFERENCE = re.compile(r"^\s*[\[(]?\s*refr[aã]o\s*[\])]?\s*:?\s*$", re.IGNORECASE)
+
+# A block that is only "[Refrão]" / "[Refrão Final]" marks the NEXT block as chorus.
+_BRACKET_MARKER = re.compile(r"^\[\s*refr[aã]o(?:\s+final)?\s*\]$", re.IGNORECASE)
 
 _NO_CHORUS = (
     "Não foi possível identificar o refrão desta letra; todas as estrofes ficaram como verso. "
@@ -103,14 +106,25 @@ class LyricsParser:
         repeated: set[int] = set()
         sequence: list[int | None] = []  # None = reference to the chorus
 
-        for block in self._blocks(raw.text):
+        pending_marker = False
+        blocks = self._blocks(raw.text)
+        for position, block in enumerate(blocks):
+            if len(block) == 1 and _BRACKET_MARKER.match(block[0]) and position + 1 < len(blocks):
+                pending_marker = True
+                continue
             for kind, lines in self._split_references(block):
                 if kind == "reference":
                     sequence.append(None)
                     continue
                 lines, has_marker = self._strip_marker(lines)
+                has_marker = has_marker or pending_marker
+                pending_marker = False
                 if not lines:
                     continue
+                collapsed = self._collapse_repeats(lines)
+                # A stanza holding a repeated block is a chorus (it gets ``/* */``).
+                has_marker = has_marker or collapsed != lines
+                lines = collapsed
                 key = _key(lines)
                 if key in index_by_key:
                     index = index_by_key[key]
@@ -157,7 +171,7 @@ class LyricsParser:
             source=raw.source,
             source_url=raw.url,
             stanzas=stanzas,
-            order=order,
+            order=self._collapse_consecutive(order),
         )
         return song, notices
 
@@ -166,12 +180,45 @@ class LyricsParser:
         """Blank-line separated blocks of whitespace-normalized, non-empty lines."""
         blocks: list[list[str]] = [[]]
         for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
-            clean = " ".join(line.split())
+            clean = clean_prolongations(" ".join(line.split()))
             if clean:
                 blocks[-1].append(clean)
             elif blocks[-1]:
                 blocks.append([])
         return [block for block in blocks if block]
+
+    @staticmethod
+    def _collapse_consecutive(order: list[int]) -> list[int]:
+        """Equal ids in a row are shown once: [1, 2, 3, 3, 4] -> [1, 2, 3, 4]."""
+        return [
+            item
+            for position, item in enumerate(order)
+            if position == 0 or item != order[position - 1]
+        ]
+
+    @staticmethod
+    def _collapse_repeats(lines: list[str]) -> list[str]:
+        """Show a block repeated in sequence once, wrapped in ``/*`` ... ``*/`` (F6)."""
+        keys = [normalize_search(line) for line in lines]
+        result: list[str] = []
+        start = 0
+        while start < len(lines):
+            for size in range((len(lines) - start) // 2, 0, -1):
+                if keys[start : start + size] != keys[start + size : start + 2 * size]:
+                    continue
+                end = start + 2 * size
+                while keys[end : end + size] == keys[start : start + size] and end < len(lines):
+                    end += size
+                block = lines[start : start + size]
+                block[0] = f"/*{block[0]}"
+                block[-1] = f"{block[-1]}*/"
+                result.extend(block)
+                start = end
+                break
+            else:
+                result.append(lines[start])
+                start += 1
+        return result
 
     @staticmethod
     def _split_references(
