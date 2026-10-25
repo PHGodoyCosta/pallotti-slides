@@ -25,6 +25,7 @@ dependencies = [
     "platformdirs",
     "keyring",
     "typer",
+    "openai>=3.37.0",
 ]
 
 [project.scripts]

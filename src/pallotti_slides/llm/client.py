@@ -1,4 +1,4 @@
-"""LLM access (ARQUITETURA §8). The only module that imports ``anthropic``.
+"""LLM access (ARQUITETURA §8). Anthropic client, shared types and the provider factory.
 
 The model never writes lyrics or liturgical text: it extracts, returns URLs and
 classifies by id (CLAUDE.md, rule 1).
@@ -16,6 +16,7 @@ from typing import Any, Protocol, TypeVar
 import anthropic
 from pydantic import BaseModel
 
+from pallotti_slides.config import Settings
 from pallotti_slides.llm.errors import LLMError
 
 T = TypeVar("T", bound=BaseModel)
@@ -24,6 +25,10 @@ DEFAULT_MODEL = "claude-opus-5-5"
 KEYRING_SERVICE = "PallottiSlides"
 KEYRING_USER = "anthropic_api_key"
 API_KEY_VAR = "ANTHROPIC_API_KEY"
+PROVIDERS = ("openai", "anthropic")
+KEYRING_USERS = {"openai": "openai_api_key", "anthropic": KEYRING_USER}
+API_KEY_VARS = {"openai": "OPENAI_API_KEY", "anthropic": API_KEY_VAR}
+PROVIDER_NAMES = {"openai": "OpenAI", "anthropic": "Anthropic"}
 WEB_SEARCH_TOOL = "web_search_20260209"
 
 NO_KEY_MESSAGE = (
@@ -59,12 +64,12 @@ class LLMClient(Protocol):
     ) -> list[SearchResult]: ...
 
 
-def _keyring_get() -> str | None:
+def _keyring_get(provider: str = "anthropic") -> str | None:
     """Read the key saved in the OS keyring (``None`` if unavailable)."""
     try:
         import keyring
 
-        value = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
+        value = keyring.get_password(KEYRING_SERVICE, KEYRING_USERS[provider])
     except Exception:  # keyring backends fail in many ways (no backend, locked...)
         return None
     return value or None
@@ -73,13 +78,45 @@ def _keyring_get() -> str | None:
 def load_api_key(
     env: Mapping[str, str] | None = None,
     keyring_get: Callable[[], str | None] | None = None,
+    provider: str = "anthropic",
 ) -> str | None:
-    """API key from the keyring, falling back to ``ANTHROPIC_API_KEY`` (development)."""
-    key = (keyring_get or _keyring_get)()
+    """API key from the keyring, falling back to ``<PROVIDER>_API_KEY`` (development)."""
+    key = keyring_get() if keyring_get is not None else _keyring_get(provider)
     if key:
         return key
-    value = (os.environ if env is None else env).get(API_KEY_VAR, "").strip()
+    value = (os.environ if env is None else env).get(API_KEY_VARS[provider], "").strip()
     return value or None
+
+
+def no_key_message(provider: str) -> str:
+    """Friendly message (Portuguese) for a missing key."""
+    return (
+        f"A chave da API da {PROVIDER_NAMES[provider]} não está configurada. Informe a chave "
+        f"nas Configurações do programa (ou defina {API_KEY_VARS[provider]}). Sem ela, a "
+        "extração automática do folheto fica desligada; o preenchimento manual continua "
+        "funcionando."
+    )
+
+
+def create_llm_client(
+    settings: Settings,
+    env: Mapping[str, str] | None = None,
+    keyring_get: Callable[[str], str | None] | None = None,
+) -> "LLMClient":
+    """Real client for ``settings.llm_provider``; ``LLMError`` (Portuguese) without a key."""
+    provider = settings.llm_provider
+    if provider not in PROVIDERS:
+        raise LLMError(f"Provedor de IA desconhecido: {provider}. Use openai ou anthropic.")
+    key = load_api_key(
+        env, (lambda: keyring_get(provider)) if keyring_get is not None else None, provider
+    )
+    if key is None:
+        raise LLMError(no_key_message(provider))
+    if provider == "anthropic":
+        return ClaudeClient(key, model=settings.anthropic_model)
+    from pallotti_slides.llm.openai_client import OpenAIClient
+
+    return OpenAIClient(key, model=settings.openai_model)
 
 
 def _translate_error(error: Exception) -> LLMError:
@@ -128,7 +165,7 @@ class ClaudeClient:
         keyring_get: Callable[[], str | None] | None = None,
     ) -> "ClaudeClient":
         """Build with the stored key; ``LLMError`` (in Portuguese) when there is none."""
-        key = load_api_key(env, keyring_get)
+        key = load_api_key(env, keyring_get, "anthropic")
         if key is None:
             raise LLMError(NO_KEY_MESSAGE)
         return cls(key, model=model)

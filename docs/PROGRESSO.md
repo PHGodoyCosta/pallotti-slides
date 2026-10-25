@@ -13,7 +13,7 @@
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ⏸ parcial | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
-| M6b | ▶️ | — | 2026-10-24 | OpenAI padrão; aguarda OPENAI_API_KEY no ambiente para live |
+| M6b | ✅ | (ver log) | 2026-10-24 | gpt-6-astra padrão; live pula sem OPENAI_API_KEY |
 | M7 | ☐ | — | — | — |
 | M8 | ☐ | — | — | — |
 | M9 | ☐ | — | — | — |

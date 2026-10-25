@@ -4,6 +4,8 @@ import pytest
 from typer.testing import CliRunner
 
 from pallotti_slides import cli
+from pallotti_slides.application import leaflet_extraction
+from pallotti_slides.config import Settings
 from pallotti_slides.leaflet.extractor import LeafletExtractor
 from pallotti_slides.llm import client as llm_client
 from pallotti_slides.llm.client import FakeLLMClient
@@ -26,7 +28,9 @@ def test_extract_prints_fields(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
 
 def test_extract_without_key_is_friendly(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.setattr(llm_client, "_keyring_get", lambda: None)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(llm_client, "_keyring_get", lambda provider="anthropic": None)
+    monkeypatch.setattr(leaflet_extraction, "load_settings", lambda: Settings())
     res = runner.invoke(cli.app, ["leaflet", "extract", str(PDF)])
     assert res.exit_code != 0
     assert "chave da API" in res.output

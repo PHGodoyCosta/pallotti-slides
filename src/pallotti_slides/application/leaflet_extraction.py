@@ -3,13 +3,13 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from pallotti_slides.config import Paths
+from pallotti_slides.config import Paths, Settings, load_settings
 from pallotti_slides.domain.errors import PallottiError
 from pallotti_slides.domain.models import Notice
 from pallotti_slides.leaflet.errors import LeafletError
 from pallotti_slides.leaflet.extractor import LeafletExtractor
 from pallotti_slides.leaflet.schema import LeafletData
-from pallotti_slides.llm.client import ClaudeClient
+from pallotti_slides.llm.client import create_llm_client
 from pallotti_slides.llm.errors import LLMError
 
 __all__ = [
@@ -30,10 +30,12 @@ class LeafletResult:
     notices: list[Notice]
 
 
-def make_leaflet_extractor(cache_dir: Path | None = None) -> LeafletExtractor:
+def make_leaflet_extractor(
+    cache_dir: Path | None = None, settings: Settings | None = None
+) -> LeafletExtractor:
     """Real extractor; raises ``LLMError`` (Portuguese) when there is no API key."""
     folder = cache_dir if cache_dir is not None else Paths.default().data / "cache" / "leaflets"
-    return LeafletExtractor(ClaudeClient.from_environment(), folder)
+    return LeafletExtractor(create_llm_client(settings or load_settings()), folder)
 
 
 def extract_leaflet(pdf: Path, extractor: LeafletExtractor | None = None) -> LeafletResult:

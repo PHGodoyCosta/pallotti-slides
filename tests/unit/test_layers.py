@@ -80,9 +80,10 @@ def test_import_rules(file: Path) -> None:
             if target is not None and target not in {"application", "domain", "ui"}:
                 pytest.fail(f"{name} imports {module}; only application/domain are allowed")
 
-    # 4. only llm/client.py imports anthropic
-    if name != "llm/client.py":
-        assert not {m for m in modules if _is_under(m, "anthropic")}, f"{name} imports anthropic"
+    # 4. only llm/ imports anthropic and openai
+    if layer != "llm":
+        sdks = {m for m in modules if _is_under(m, "anthropic") or _is_under(m, "openai")}
+        assert not sdks, f"{name} imports an LLM SDK outside llm/: {sdks}"
 
     # 5. only db imports sqlalchemy
     if layer != "db":

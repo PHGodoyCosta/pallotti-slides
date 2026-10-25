@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from platformdirs import user_config_dir, user_data_dir, user_log_dir
+from pydantic import BaseModel, ValidationError
 
 APP_NAME = "PallottiSlides"
 FONT_FAMILY = "Aptos"
@@ -38,6 +39,30 @@ class Paths:
             config=Path(user_config_dir(APP_NAME)) / "config.json",
             logs=Path(user_log_dir(APP_NAME)),
         )
+
+
+class Settings(BaseModel):
+    """User settings saved as JSON. API keys never go here (they live in the keyring)."""
+
+    llm_provider: str = "openai"
+    openai_model: str = "gpt-6-astra"
+    anthropic_model: str = "claude-opus-5-5"
+
+
+def load_settings(path: Path | None = None) -> Settings:
+    """Read settings; a missing or invalid file gives the defaults."""
+    file = path if path is not None else Paths.default().config
+    try:
+        return Settings.model_validate_json(file.read_text(encoding="utf-8"))
+    except (OSError, ValidationError):
+        return Settings()
+
+
+def save_settings(settings: Settings, path: Path | None = None) -> None:
+    """Write settings as JSON, creating the folder if needed."""
+    file = path if path is not None else Paths.default().config
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_text(settings.model_dump_json(indent=2), encoding="utf-8")
 
 
 def default_db_url(paths: Paths | None = None, env: Mapping[str, str] | None = None) -> str:
