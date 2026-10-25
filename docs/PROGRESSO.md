@@ -8,7 +8,7 @@
 | M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
 | M2 | ✅ | 156e50e | 2026-10-24 | aprovado pelo Pedro (M2-a..d ok) |
-| M3 | 🧑 aguardando | (este commit) | 2026-10-24 | aprovar pptx/PDF de /tmp/saida-m3c; decidir M3-a (área do canto) e M3-b (caixas estreitas) |
+| M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado com ajustes (M3-fix em andamento) |
 | M3b | ☐ | — | 2026-10-24 | depois do M3; cache automático de cantos |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ⏸ parcial | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
@@ -43,11 +43,10 @@
 - 2026-10-24 — Toda pergunta no chat também vai para o Telegram (Pedro, TUI)
 - 2026-10-24 — M3b: biblioteca de pptx (uma OE por arquivo; cache automático por canto, regenerado se letra/tipografia mudar); M3 termina como está (Pedro, TUI)
 - 2026-10-24 — D6: provedor padrão OpenAI; D7: todas as OEs do Missal 3ª ed., lista confirmada no M10 (Pedro, TUI)
+- 2026-10-24 — M3 aprovado com ajustes: rótulo "Canto de Saída"; refrão curto com fonte maior; texto nunca vaza, centralizado e grande; caixas do corpo alargadas (M3-b) e estendidas até perto do pé do slide, voltando à regra "a caixa define a área" (M3-a) (Pedro, TUI)
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
-- M3-a: no exemplo, slides 12 e 38 passam ~50–60 pt do fundo da caixa do corpo; hoje a área útil vai até 0,2" do pé do slide (desvio do MODELO_PPTX §2). Rec.: aumentar a caixa no modelo e voltar à regra
-- M3-b: protótipos de ofertório/comunhão/pós/saída herdaram caixa estreita (10173240 EMU); rec.: alargar para 11944080 como os demais
 - M5b: rótulos de seção do Cifra Club ("[Intro]", "[Primeira Parte]") — decidir com o HTML real; letra de estrofe única sem marcação sai como verso + aviso
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar

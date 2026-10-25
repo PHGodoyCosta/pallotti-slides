@@ -278,6 +278,9 @@ funcionalidade só está pronta quando todos os critérios passam.
   slide repetido, como no exemplo.
 - Texto **centralizado**. Refrão em **negrito**.
 - Rótulo do momento no canto superior esquerdo (vermelho, como no modelo).
+- **Refrão maior:** as páginas de refrão têm o próprio tamanho, comum a todos os
+  refrões do canto, e podem ser maiores que as estrofes quando sobra espaço
+  (decisão do Pedro, 2026-10-24). Nunca abaixo de `fonte_min`.
 - **Tamanho de fonte por canto**: o maior tamanho entre `max_font` (54 pt) e
   `min_font` (40 pt), em passos de 2 pt, em que **todas** as páginas do canto
   cabem na caixa. Assim o canto inteiro fica com o mesmo tamanho e todos os
