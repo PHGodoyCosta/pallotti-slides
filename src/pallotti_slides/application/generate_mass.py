@@ -3,6 +3,7 @@
 Every generation is recorded in the history (``mass_repo``, wired by the container).
 """
 
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
@@ -16,9 +17,10 @@ from pallotti_slides.domain.rules import output_file_name, validate_mass
 from pallotti_slides.presentation.builder import PptxBuilder
 from pallotti_slides.presentation.errors import PdfConversionError, TemplateError
 from pallotti_slides.presentation.measurer import TextMeasurer
-from pallotti_slides.presentation.paginator import SongPage, SongPaginator
+from pallotti_slides.presentation.paginator import SongPaginator
 from pallotti_slides.presentation.pdf import LibreOfficeConverter, PdfConverter
 from pallotti_slides.presentation.planner import BuildPlanner
+from pallotti_slides.presentation.song_cache import SongDeck, SongDeckCache
 from pallotti_slides.presentation.template import MassTemplate
 
 PDF_HELP = (
@@ -44,7 +46,7 @@ class GenerationResult:
 
 
 class MassGenerator:
-    """Mass -> song pages -> slide plan -> .pptx -> .pdf."""
+    """Mass -> song decks (cache) -> slide plan -> .pptx -> .pdf."""
 
     def __init__(
         self,
@@ -54,6 +56,7 @@ class MassGenerator:
         builder: PptxBuilder,
         converter: PdfConverter | None,
         mass_repo: MassHistory | None = None,
+        song_cache: SongDeckCache | None = None,
     ) -> None:
         self._template = template
         self._paginator = paginator
@@ -61,6 +64,7 @@ class MassGenerator:
         self._builder = builder
         self._converter = converter
         self._mass_repo = mass_repo
+        self._song_cache = song_cache
 
     def generate(self, mass: Mass, output_dir: Path) -> GenerationResult:
         errors = [n for n in validate_mass(mass) if n.level == "error"]
@@ -73,11 +77,13 @@ class MassGenerator:
             raise TemplateError(f"O modelo do PowerPoint tem problemas: {details}")
 
         notices = list(self._paginator.measurer.notices)
-        pages = self._paginate(mass, notices)
-        plan = self._planner.plan(self._template, mass, pages)
-
         name = output_file_name(mass)
-        pptx = self._builder.build(self._template.path, plan, output_dir / f"{name}.pptx")
+        if self._song_cache is not None:
+            pptx = self._build(mass, self._song_cache, output_dir / f"{name}.pptx", notices)
+        else:  # no cache directory: the song decks live only during this generation
+            with tempfile.TemporaryDirectory(prefix="pallotti-songs-") as folder:
+                cache = SongDeckCache(Path(folder), self._template, self._paginator)
+                pptx = self._build(mass, cache, output_dir / f"{name}.pptx", notices)
 
         pdf: Path | None = None
         if self._converter is None:
@@ -99,17 +105,23 @@ class MassGenerator:
                 )
         return GenerationResult(pptx=pptx, pdf=pdf, notices=notices)
 
-    def _paginate(self, mass: Mass, notices: list[Notice]) -> dict[SongMoment, list[SongPage]]:
-        pages: dict[SongMoment, list[SongPage]] = {}
-        measurer = self._paginator.measurer
+    def _build(
+        self, mass: Mass, cache: SongDeckCache, destination: Path, notices: list[Notice]
+    ) -> Path:
+        songs = self._song_decks(mass, cache, notices)
+        plan = self._planner.plan(self._template, mass, songs)
+        return self._builder.build(self._template.path, plan, destination)
+
+    def _song_decks(
+        self, mass: Mass, cache: SongDeckCache, notices: list[Notice]
+    ) -> dict[SongMoment, SongDeck]:
+        decks: dict[SongMoment, SongDeck] = {}
         for moment in SongMoment:
             song = mass.songs.get(moment)
             if song is None or (moment is SongMoment.GLORIA and not mass.has_gloria):
                 continue
-            area = self._template.song_area(moment)
-            body = self._template.body_format(moment)
-            song_pages = self._paginator.paginate(song, area, body)
-            if not song_pages:
+            deck = cache.deck(moment, song)
+            if deck is None:
                 notices.append(
                     Notice(
                         level="warning",
@@ -118,7 +130,7 @@ class MassGenerator:
                     )
                 )
                 continue
-            if not all(measurer.fits(p.lines, p.size_pt, area, body) for p in song_pages):
+            if deck.overflow:
                 notices.append(
                     Notice(
                         level="warning",
@@ -129,8 +141,8 @@ class MassGenerator:
                         field=f"songs.{moment.value}",
                     )
                 )
-            pages[moment] = song_pages
-        return pages
+            decks[moment] = deck
+        return decks
 
 
 def make_mass_generator(
@@ -138,17 +150,23 @@ def make_mass_generator(
     *,
     with_pdf: bool = True,
     typography: TypographyConfig | None = None,
+    songs_dir: Path | None = None,
 ) -> MassGenerator:
-    """Generator with the real dependencies (template, Aptos via ``FontLocator``, LibreOffice)."""
+    """Generator with the real dependencies (template, Aptos via ``FontLocator``, LibreOffice).
+
+    ``songs_dir`` is the song deck cache; without it the decks are made for each generation.
+    """
     template = MassTemplate.load(template_path)
     fonts = FontLocator().locate()
     measurer = TextMeasurer(fonts.regular, fonts.bold)
+    paginator = SongPaginator(measurer, typography or TypographyConfig())
     return MassGenerator(
         template=template,
-        paginator=SongPaginator(measurer, typography or TypographyConfig()),
+        paginator=paginator,
         planner=BuildPlanner(),
         builder=PptxBuilder(),
         converter=LibreOfficeConverter() if with_pdf else None,
+        song_cache=SongDeckCache(songs_dir, template, paginator) if songs_dir else None,
     )
 
 

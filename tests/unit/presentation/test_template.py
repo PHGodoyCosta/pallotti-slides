@@ -1,5 +1,6 @@
 """The shipped template (MODELO_PPTX.md) and the inspector rules."""
 
+import shutil
 from collections.abc import Callable
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from pallotti_slides.presentation.template import (
     MassTemplate,
     SlideTag,
     TagKind,
+    default_prayers_dir,
     default_template_path,
 )
 
@@ -112,24 +114,32 @@ def test_second_reading_group_holds_the_reading_slides(template: MassTemplate) -
     assert any("liturgy.second_reading" in s.fields for s in group)
 
 
-def test_prayer_block_is_contiguous_and_has_mystery_of_faith(template: MassTemplate) -> None:
+def test_prayer_blocks_come_from_the_prayers_folder(template: MassTemplate) -> None:
     assert template.available_prayers() == [
         EucharisticPrayer.III,
         EucharisticPrayer.VARIOUS_NEEDS_IV,
     ]
-    block = [s.index for s in template.slides if s.tag.prayer is EucharisticPrayer.III]
-    assert block == list(range(block[0], block[-1] + 1))
-    assert any("liturgy.mystery_of_faith" in template.slides[i].fields for i in block)
-    block_dc = [
-        s.index for s in template.slides if s.tag.prayer is EucharisticPrayer.VARIOUS_NEEDS_IV
-    ]
-    assert len(block_dc) == 18  # 9 images + 9 responses
-    assert block_dc == list(range(block_dc[0], block_dc[-1] + 1))
-    assert any("liturgy.mystery_of_faith" in template.slides[i].fields for i in block_dc)
+    third = template.prayer_block(EucharisticPrayer.III)
+    assert third.path == default_prayers_dir() / "III.pptx"
+    assert len(third.slides) == 14
+    various = template.prayer_block(EucharisticPrayer.VARIOUS_NEEDS_IV)
+    assert various.path.name == "DC_IV.pptx"
+    assert len(various.slides) == 18  # 9 images + 9 responses
+    for block in (third, various):
+        assert all(s.tag.prayer is block.prayer for s in block.slides)
+        assert any("liturgy.mystery_of_faith" in s.fields for s in block.slides)
+
+
+def test_template_keeps_only_the_prayer_slot(template: MassTemplate) -> None:
+    assert all(s.tag.kind is not TagKind.PRAYER for s in template.slides)
+    slots = [s for s in template.slides if s.tag.kind is TagKind.PRAYER_SLOT]
+    assert len(slots) == 1
+    assert template.prayer_slot() == slots[0]
 
 
 def test_all_text_fields_are_in_the_template(template: MassTemplate) -> None:
-    used = set().union(*(s.fields for s in template.slides))
+    blocks = [s for block in template.prayers.values() for s in block.slides]
+    used = set().union(*(s.fields for s in [*template.slides, *blocks]))
     assert used == {
         "celebration.title",
         "liturgy.first_reading",
@@ -193,6 +203,8 @@ def test_corrupt_file_is_a_template_error(tmp_path: Path) -> None:
         ("@pallotti canto=ato_penitencial", TagKind.SONG),
         ("@pallotti canto=pos_comunhao", TagKind.SONG),
         ("@pallotti oe=III", TagKind.PRAYER),
+        ("@pallotti oe=DC_IV", TagKind.PRAYER),
+        ("@pallotti oe=slot", TagKind.PRAYER_SLOT),
         ("  @pallotti   fixo  ", TagKind.FIXED),
     ],
 )
@@ -343,6 +355,27 @@ def test_song_tag_outside_prototype_is_an_error(tmp_path: Path) -> None:
     assert any("só podem ficar em protótipo" in m for m in errors)
 
 
+def copy_prayers(tmp_path: Path, *names: str) -> Path:
+    folder = tmp_path / "oes"
+    folder.mkdir()
+    for name in names:
+        shutil.copy(default_prayers_dir() / name, folder / name)
+    return folder
+
+
+def edit_prayer(folder: Path, name: str, change: Callable[[PresentationType], None]) -> None:
+    presentation = Presentation(str(folder / name))
+    change(presentation)
+    presentation.save(str(folder / name))
+
+
+def test_available_prayers_are_the_files_of_the_folder(tmp_path: Path) -> None:
+    template = MassTemplate.load(prayers_dir=copy_prayers(tmp_path, "III.pptx"))
+    assert template.available_prayers() == [EucharisticPrayer.III]
+    with pytest.raises(TemplateError, match="DC IV"):
+        template.prayer_block(EucharisticPrayer.VARIOUS_NEEDS_IV)
+
+
 def test_prayer_block_without_mystery_of_faith_is_a_warning(tmp_path: Path) -> None:
     def change(p: PresentationType) -> None:
         slide = first_slide_with(p, "{{liturgia.misterio_fe}}")
@@ -353,16 +386,49 @@ def test_prayer_block_without_mystery_of_faith_is_a_warning(tmp_path: Path) -> N
                         if run.text == "{{liturgia.misterio_fe}}":
                             run.text = "Salvador do mundo"
 
-    template = edit_template(tmp_path, change)
+    folder = copy_prayers(tmp_path, "III.pptx")
+    edit_prayer(folder, "III.pptx", change)
+    template = MassTemplate.load(prayers_dir=folder)
     assert not messages(template, "error")
     assert any("misterio_fe" in m for m in messages(template, "warning"))
 
 
 def test_template_without_prayer_block_is_an_error(tmp_path: Path) -> None:
+    template = MassTemplate.load(prayers_dir=copy_prayers(tmp_path))
+    assert template.available_prayers() == []
+    assert any("nenhum bloco de Oração Eucarística" in m for m in messages(template, "error"))
+
+
+def test_prayer_slide_with_another_tag_is_an_error(tmp_path: Path) -> None:
+    folder = copy_prayers(tmp_path, "III.pptx")
+    edit_prayer(folder, "III.pptx", lambda p: set_notes(p.slides[2], "@pallotti oe=IV"))
+    notices = MassTemplate.load(prayers_dir=folder).validate()
+    errors = [n for n in notices if n.level == "error"]
+    assert [n.field for n in errors] == ["III.pptx, slide 3"]
+    assert "oe=III" in errors[0].message
+
+
+def test_unknown_or_broken_prayer_files(tmp_path: Path) -> None:
+    folder = copy_prayers(tmp_path, "III.pptx")
+    shutil.copy(folder / "III.pptx", folder / "OE_V.pptx")
+    (folder / "IV.pptx").write_bytes(b"not a zip")
+    template = MassTemplate.load(prayers_dir=folder)
+    assert template.available_prayers() == [EucharisticPrayer.III]
+    assert any("OE_V.pptx" in m for m in messages(template, "warning"))
+    assert any("IV.pptx" in m for m in messages(template, "error"))
+
+
+def test_template_without_prayer_slot_is_an_error(tmp_path: Path) -> None:
     def change(p: PresentationType) -> None:
-        for slide in p.slides:
-            if slide.has_notes_slide and "oe=" in slide.notes_slide.notes_text_frame.text:
-                set_notes(slide, "@pallotti fixo")
+        set_notes(slide_with_tag(p, "oe=slot"), "@pallotti fixo")
 
     errors = messages(edit_template(tmp_path, change), "error")
-    assert any("nenhum bloco de Oração Eucarística" in m for m in errors)
+    assert any("oe=slot" in m for m in errors)
+
+
+def test_prayer_slides_inside_the_template_are_an_error(tmp_path: Path) -> None:
+    def change(p: PresentationType) -> None:
+        set_notes(slide_with_tag(p, "fixo"), "@pallotti oe=III")
+
+    errors = messages(edit_template(tmp_path, change), "error")
+    assert any("eucharistic_prayers" in m for m in errors)

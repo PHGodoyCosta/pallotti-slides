@@ -8,7 +8,11 @@ docs/MODELO_PPTX.md:
 * writes the ``@pallotti ...`` tag on the first line of each slide's notes;
 * replaces the variable texts by ``{{...}}`` tags (inside the original run, so the formatting
   stays);
-* adds the communion / post-communion / recessional songs, by copying existing slides.
+* adds the communion / post-communion / recessional songs, by copying existing slides;
+* moves each Eucharistic prayer block to its own file,
+  ``src/pallotti_slides/resources/eucharistic_prayers/<id>.pptx`` (slides untouched), and leaves
+  in the template only the marker ``@pallotti oe=slot`` (a copy of the first slide of the block,
+  never shown in a generated deck).
 
 Nothing is drawn by code: slides are only kept, removed, copied and reordered.
 Every slide number below is a slide of the EXAMPLE (1-based). The values marked PROVISIONAL are
@@ -19,6 +23,7 @@ Usage: uv run python scripts/create_template_from_example.py
 
 import sys
 from collections.abc import Callable
+from io import BytesIO
 from pathlib import Path
 
 from pptx import Presentation
@@ -32,6 +37,7 @@ from pallotti_slides.domain.models import Mass
 from pallotti_slides.presentation.slides_xml import duplicate_slide, keep_slides
 from pallotti_slides.presentation.template import (
     MOMENT_TAGS,
+    PRAYER_SLOT_ID,
     SECOND_READING_GROUP,
     SONG_GROUP_PREFIX,
     TAG_PREFIX,
@@ -42,6 +48,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE = ROOT / "examples" / "Missa - 26° Dom do T.C - 26.09.2026 - OE III.pptx"
 FIXTURE = ROOT / "tests" / "fixtures" / "masses" / "26tc_2026.json"
 OUTPUT = ROOT / "src" / "pallotti_slides" / "resources" / "template" / "mass_template.pptx"
+PRAYERS_DIR = ROOT / "src" / "pallotti_slides" / "resources" / "eucharistic_prayers"
 
 # --- Song moments of the example -------------------------------------------------------------
 # The prototype is the first slide of each song block; the other slides of the block go away.
@@ -199,6 +206,46 @@ def set_tag(slide: Slide, tag: str) -> None:
     slide.notes_slide.notes_text_frame.text = f"{TAG_PREFIX} {tag}"
 
 
+def get_tag(slide: Slide) -> str:
+    text = slide.notes_slide.notes_text_frame.text if slide.has_notes_slide else ""
+    return text.strip().removeprefix(TAG_PREFIX).strip()
+
+
+def split_prayer_blocks(full: bytes) -> list[str]:
+    """Write the template (marker in place of the blocks) and one file per prayer block.
+
+    ``full`` is the template with every block inside (tags ``oe=<id>``). Each file is that
+    same deck reduced to some of its slides, so the slides are not touched.
+    """
+    deck = Presentation(BytesIO(full))
+    slides = list(deck.slides)
+    tags = [get_tag(slide) for slide in slides]
+    ids = list(dict.fromkeys(t.removeprefix("oe=") for t in tags if t.startswith("oe=")))
+    if not ids:
+        fail("o modelo completo não tem blocos de OE")
+    first = next(i for i, tag in enumerate(tags) if tag.startswith("oe="))
+    marker = duplicate_slide(deck, slides[first])
+    set_tag(marker, f"oe={PRAYER_SLOT_ID}")
+    kept = [*slides[:first], marker]
+    kept += [
+        s for s, tag in zip(slides[first:], tags[first:], strict=True) if not tag.startswith("oe=")
+    ]
+    keep_slides(deck, kept)
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    deck.save(str(OUTPUT))
+    print(f"Modelo gravado em {OUTPUT} ({len(kept)} slides)")
+
+    PRAYERS_DIR.mkdir(parents=True, exist_ok=True)
+    for prayer in ids:
+        deck = Presentation(BytesIO(full))
+        block = [s for s in deck.slides if get_tag(s) == f"oe={prayer}"]
+        keep_slides(deck, block)
+        path = PRAYERS_DIR / f"{prayer}.pptx"
+        deck.save(str(path))
+        print(f"Bloco da OE gravado em {path} ({len(block)} slides)")
+    return ids
+
+
 def main() -> None:
     if not EXAMPLE.is_file():
         fail(f"exemplo não encontrado: {EXAMPLE}")
@@ -254,12 +301,13 @@ def main() -> None:
     for slide, tag in ordered:
         set_tag(slide, tag)
 
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    presentation.save(str(OUTPUT))
-    print(f"Modelo gravado em {OUTPUT} ({len(ordered)} slides)")
+    # 5. Prayer blocks to their own files; the template keeps only the marker.
+    full = BytesIO()
+    presentation.save(full)
+    split_prayer_blocks(full.getvalue())
 
-    # 5. Check the result with the same code the program uses.
-    problems = MassTemplate.load(OUTPUT).validate()
+    # 6. Check the result with the same code the program uses.
+    problems = MassTemplate.load(OUTPUT, PRAYERS_DIR).validate()
     for notice in problems:
         print(f"{notice.level.upper()}: {notice.field or '-'}: {notice.message}")
     if any(notice.level == "error" for notice in problems):

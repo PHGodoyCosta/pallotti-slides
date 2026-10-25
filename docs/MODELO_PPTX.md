@@ -17,7 +17,8 @@ A **primeira linha das anotações** de cada slide define o papel dele:
 | `@pallotti fixo` | Sempre presente. (Slide sem etiqueta = fixo, mas o inspetor avisa.) |
 | `@pallotti grupo=<id>` | Entra ou sai junto com o grupo `<id>`. |
 | `@pallotti canto=<momento>` | **Protótipo** do canto daquele momento: duplicado uma vez por página do canto. Pertence ao grupo `canto:<momento>`. |
-| `@pallotti oe=<id>` | Faz parte do bloco da Oração Eucarística `<id>` (I, II, III, IV…). Só o bloco escolhido fica. Etiquetas não aceitam espaço: `oe=DC_IV` corresponde ao valor `DC IV` do enum (`VARIOUS_NEEDS_IV`; aparece no nome do arquivo). |
+| `@pallotti oe=slot` | **Marcador** do lugar da Oração Eucarística no modelo: no resultado ele é trocado pelos slides do arquivo da OE escolhida (§5) e nunca aparece. Exatamente um no modelo (é uma cópia do primeiro slide do bloco, só para a prévia). |
+| `@pallotti oe=<id>` | Slide do bloco da Oração Eucarística `<id>` (I, II, III, IV…). Só vale **dentro do arquivo da OE** (`eucharistic_prayers/<id>.pptx`, §5); no modelo principal é erro. Etiquetas não aceitam espaço: `oe=DC_IV` corresponde ao valor `DC IV` do enum (`VARIOUS_NEEDS_IV`; aparece no nome do arquivo). |
 
 Grupos reconhecidos:
 
@@ -124,7 +125,9 @@ Baseado em `examples/Missa - 26° Dom do T.C - 26.09.2026 - OE III.pptx`
 **Provisório no M2 (2026-10-24), a confirmar no portão:** bloco OE III =
 slides 47–60 do exemplo; fim = 66 Cordeiro, 67 "Senhor, eu não sou digno",
 68 hóstia (fixo), depois separador (Jesus) + comunhão, separador + pós-comunhão,
-separador + saída, 69 final. O modelo gerado tem 80 slides (com o bloco OE DC IV).
+separador + saída, 69 final. Desde o M3b o modelo tem 49 slides: os blocos das
+OEs (14 slides da OE III, 18 da DC IV) ficam nos arquivos da §5 e, no lugar
+deles, o marcador `@pallotti oe=slot`.
 
 **A confirmar com o usuário** (marco M2, com perguntas específicas): os limites
 exatos do bloco da OE (47–60), a posição dos novos cantos de comunhão,
@@ -144,6 +147,24 @@ Derivado dos slides de canto do exemplo:
 
 ## 5. Blocos de Oração Eucarística
 
+Cada OE tem o **seu próprio arquivo** em
+`src/pallotti_slides/resources/eucharistic_prayers/<id>.pptx` (`III.pptx`,
+`DC_IV.pptx`; `<id>` é o da etiqueta, sem espaço). O arquivo traz só os slides
+do bloco, em ordem, cada um com `@pallotti oe=<id>` nas anotações, e usa os
+mesmos layouts (nomes) e o mesmo tamanho de slide do modelo principal. Os
+blocos atuais foram separados do modelo por
+`scripts/create_template_from_example.py`, sem retoque. O modelo principal
+guarda só o marcador `@pallotti oe=slot` (§1).
+
+A lista de OEs do programa é a lista de arquivos da pasta: para acrescentar
+uma OE, copie um arquivo existente (para herdar o tema), troque os slides e
+salve como `<id>.pptx`. Arquivo com nome desconhecido é ignorado (aviso).
+
+Ao gerar, os slides da OE escolhida são **importados** para o lugar do
+marcador (parte do slide, imagens sem duplicar, layout de mesmo nome do modelo
+e anotações), e as etiquetas `{{...}}` deles (ex.: `{{liturgia.misterio_fe}}`)
+são preenchidas como no modelo.
+
 | Bloco | Estado | Fonte do texto | Aprovado por / data |
 |---|---|---|---|
 | OE III | MVP (vem do exemplo) | Exemplo 26/09/2026 | — |
@@ -152,9 +173,21 @@ Derivado dos slides de canto do exemplo:
 | OE IV | pendente | Missal Romano 3ª ed. / folheto | — |
 | OE Diversas Circunstâncias IV | pronto | respostas fornecidas pelo Pedro | Pedro, 2026-10-24 |
 
-Um bloco só entra na lista de OEs do programa depois de aprovado aqui. O agente
+Um bloco só entra na pasta depois de aprovado aqui. O agente
 pode **montar o rascunho** de um bloco (respostas da assembleia a partir de
 fonte indicada pelo usuário), mas a aprovação é humana.
+
+### Cache de cantos
+
+Os slides de cada canto também vêm de um pptx próprio, gerado pelo programa em
+`<pasta de dados>/songs/<chave>.pptx` (`Paths.data/songs`): o protótipo do
+momento repetido uma vez por página da paginação, com o corpo já preenchido e
+`{{canto.rotulo}}` ainda como etiqueta. A chave é um hash das estrofes na ordem
+de execução, da `TypographyConfig`, da fonte de medida e do **slide protótipo**
+(XML e imagens). Mudou a letra, a tipografia ou o protótipo, o arquivo é gerado
+de novo automaticamente; usar o mesmo canto em outro momento com protótipo
+igual (comunhão, pós-comunhão, saída) reaproveita o arquivo e só troca o
+rótulo. A pasta pode ser apagada a qualquer momento.
 
 ## 6. Inspetor (`pallotti template inspect`)
 
@@ -163,8 +196,17 @@ Falha (código de saída ≠ 0) quando:
 - falta protótipo para algum momento, ou há protótipo duplicado;
 - uma etiqueta `{{...}}` está dividida em vários runs ou é desconhecida;
 - um protótipo de canto não tem `{{canto.texto}}`;
+- falta o marcador `@pallotti oe=slot`, ele está duplicado, ou há slide
+  `@pallotti oe=<id>` no modelo principal;
+- não há nenhum arquivo de OE na pasta, ou um arquivo não abre;
+- um arquivo de OE tem slide sem `@pallotti oe=<id>` do próprio arquivo, etiqueta
+  `{{...}}` desconhecida/dividida ou `{{canto.*}}`, layout que o modelo não tem
+  ou tamanho de slide diferente;
 - um bloco de OE não tem slide com `{{liturgia.misterio_fe}}` (aviso, não erro,
   para OEs sem aclamação no slide).
+
+As linhas da tabela são as do modelo principal; os problemas dos arquivos de OE
+aparecem com o nome do arquivo (ex.: `III.pptx, slide 3`).
 
 Imprime uma tabela: nº do slide, etiqueta, campos e uma miniatura opcional
 (`--preview`).

@@ -17,8 +17,8 @@ def test_inspect_shipped_template_exits_zero() -> None:
     res = runner.invoke(app, ["template", "inspect"])
     assert res.exit_code == 0, res.output
     assert "canto=entrada" in res.output
-    assert "oe=III" in res.output
-    assert "liturgy.mystery_of_faith" in res.output
+    assert "oe=slot" in res.output
+    assert "III, DC IV" in res.output
     assert "0 erro(s)" in res.output
 
 

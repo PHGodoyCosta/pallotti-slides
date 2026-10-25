@@ -1,12 +1,14 @@
-"""BuildPlanner: which template slides go into the deck and with which texts (SPEC F8)."""
+"""BuildPlanner: which slides go into the deck, from which file and with which texts (F8)."""
+
+from pathlib import Path
 
 import pytest
 
 from pallotti_slides.domain.enums import EucharisticPrayer, SongMoment
-from pallotti_slides.domain.models import Line, Mass
+from pallotti_slides.domain.models import Mass
 from pallotti_slides.presentation.errors import TemplateError
-from pallotti_slides.presentation.paginator import SongPage
 from pallotti_slides.presentation.planner import BuildPlanner, SlidePlan, TextContent
+from pallotti_slides.presentation.song_cache import SongDeck
 from pallotti_slides.presentation.template import (
     SECOND_READING_GROUP,
     MassTemplate,
@@ -15,55 +17,88 @@ from pallotti_slides.presentation.template import (
 )
 
 
-def one_page_per_stanza(mass: Mass) -> dict[SongMoment, list[SongPage]]:
+def one_deck_per_song(mass: Mass) -> dict[SongMoment, SongDeck]:
+    """Fake cached decks: one page per stanza (the planner never opens them)."""
     return {
-        moment: [SongPage(lines=list(s.lines), size_pt=48) for s in song.sequence()]
+        moment: SongDeck(path=Path(f"/cache/{moment.value}.pptx"), pages=len(song.sequence()))
         for moment, song in mass.songs.items()
     }
 
 
-def kinds(template: MassTemplate, plan: SlidePlan) -> list[TemplateSlide]:
-    return [template.slides[source] for source in plan.sources]
+def template_slides(template: MassTemplate, plan: SlidePlan) -> list[TemplateSlide]:
+    return [template.slides[t.source] for t in plan if t.deck is None]
 
 
-def test_reference_mass_keeps_all_but_the_absent_songs(
-    template: MassTemplate, mass_26tc: Mass
-) -> None:
-    plan = BuildPlanner().plan(template, mass_26tc, one_page_per_stanza(mass_26tc))
-    absent = {SongMoment.COMMUNION, SongMoment.POST_COMMUNION, SongMoment.RECESSIONAL}
-    removed = [s for s in template.slides if s.index not in set(plan.sources)]
-    songs_removed = [s for s in removed if s.tag.prayer is None]
-    assert {s.tag.moment for s in songs_removed} == absent
-    assert len(songs_removed) == 6  # separator + prototype of each absent moment
-    # the other prayer block (DC IV: 9 images + 9 responses) is removed too
-    assert len(removed) - len(songs_removed) == 18
+def song_moments(plan: SlidePlan) -> list[str]:
+    """Moments of the song slides, in order (from the fake deck names)."""
+    found: list[str] = []
+    for target in plan:
+        deck = target.deck
+        if deck is not None and deck.parent == Path("/cache") and deck.stem not in found:
+            found.append(deck.stem)
+    return found
+
+
+def test_reference_mass_has_the_69_slides(template: MassTemplate, mass_26tc: Mass) -> None:
+    plan = BuildPlanner().plan(template, mass_26tc, one_deck_per_song(mass_26tc))
     assert len(plan) == 69
+    used = {t.source for t in plan if t.deck is None}
+    removed = [s for s in template.slides if s.index not in used]
+    absent = {SongMoment.COMMUNION, SongMoment.POST_COMMUNION, SongMoment.RECESSIONAL}
+    # every prototype goes (songs come from the cache) and so does the prayer slot
+    assert {s.tag.kind for s in removed} == {TagKind.SONG, TagKind.GROUP, TagKind.PRAYER_SLOT}
+    assert {s.tag.moment for s in removed if s.tag.kind is TagKind.GROUP} == absent
 
 
-def test_prototype_is_repeated_once_per_page_with_label_and_body(
+def test_song_slides_come_from_the_cached_deck_with_the_label(
     template: MassTemplate, mass_26tc: Mass
 ) -> None:
-    pages = one_page_per_stanza(mass_26tc)
-    plan = BuildPlanner().plan(template, mass_26tc, pages)
+    decks = one_deck_per_song(mass_26tc)
+    plan = BuildPlanner().plan(template, mass_26tc, decks)
+    entrance = [t for t in plan if t.deck == decks[SongMoment.ENTRANCE].path]
+    assert [t.source for t in entrance] == [0, 1, 2, 3]  # order [1, 2, 3, 2] -> 4 pages
+    for target in entrance:
+        assert target.replacements == {"song.label": TextContent(text="Canto de Entrada")}
     prototype = template.prototype(SongMoment.ENTRANCE)
     assert prototype is not None
-    targets = [t for t in plan if t.source == prototype.index]
-    assert len(targets) == 4  # order [1, 2, 3, 2]
-    sources = plan.sources
-    first = sources.index(prototype.index)
-    assert sources[first : first + 4] == [prototype.index] * 4
-    for target, page in zip(targets, pages[SongMoment.ENTRANCE], strict=True):
-        assert target.replacements["song.label"] == TextContent(text="Canto de Entrada")
-        body = target.replacements["song.text"]
-        assert body.is_body
-        assert list(body.lines) == page.lines
-        assert body.size_pt == 48
+    separator = template.slides[prototype.index - 1]
+    position = plan.slides.index(entrance[0])
+    assert plan.slides[position - 1].source == separator.index
+
+
+def test_same_deck_in_another_moment_only_changes_the_label(
+    template: MassTemplate, mass_26tc: Mass
+) -> None:
+    deck = SongDeck(path=Path("/cache/shared.pptx"), pages=2)
+    plan = BuildPlanner().plan(
+        template, mass_26tc, {SongMoment.ENTRANCE: deck, SongMoment.RECESSIONAL: deck}
+    )
+    labels = [t.replacements["song.label"].text for t in plan if t.deck == deck.path]
+    assert labels == ["Canto de Entrada"] * 2 + ["Canto de Saída"] * 2
+
+
+def test_chosen_prayer_block_replaces_the_slot(template: MassTemplate, mass_26tc: Mass) -> None:
+    plan = BuildPlanner().plan(template, mass_26tc, one_deck_per_song(mass_26tc))
+    block = template.prayer_block(EucharisticPrayer.III)
+    prayer = [t for t in plan if t.deck == block.path]
+    assert [t.source for t in prayer] == list(range(len(block.slides)))
+    slot = template.prayer_slot()
+    assert slot is not None
+    first = plan.slides.index(prayer[0])
+    assert plan.slides[first - 1].source == slot.index - 1  # right where the slot was
+    assert plan.slides[first - 1].deck is None
+    other = template.prayer_block(EucharisticPrayer.VARIOUS_NEEDS_IV).path
+    assert all(t.deck != other for t in plan)
 
 
 def test_every_field_of_every_slide_gets_a_value(template: MassTemplate, mass_26tc: Mass) -> None:
-    plan = BuildPlanner().plan(template, mass_26tc, one_page_per_stanza(mass_26tc))
+    plan = BuildPlanner().plan(template, mass_26tc, one_deck_per_song(mass_26tc))
+    block = template.prayer_block(EucharisticPrayer.III)
     for target in plan:
-        assert set(target.replacements) == template.slides[target.source].fields
+        if target.deck is None:
+            assert set(target.replacements) == template.slides[target.source].fields
+        elif target.deck == block.path:
+            assert set(target.replacements) == block.slides[target.source].fields
     values = {
         name: content.text
         for target in plan
@@ -78,58 +113,49 @@ def test_every_field_of_every_slide_gets_a_value(template: MassTemplate, mass_26
 def test_full_mass_without_gloria_nor_second_reading(
     template: MassTemplate, mass_full: Mass
 ) -> None:
-    plan = BuildPlanner().plan(template, mass_full, one_page_per_stanza(mass_full))
-    slides = kinds(template, plan)
+    plan = BuildPlanner().plan(template, mass_full, one_deck_per_song(mass_full))
+    slides = template_slides(template, plan)
     assert all(s.tag.moment is not SongMoment.GLORIA for s in slides)
     assert all(s.tag.group != SECOND_READING_GROUP for s in slides)
-    song_order = []
-    for slide in slides:
-        moment = slide.tag.moment
-        if slide.tag.kind is TagKind.SONG and moment is not None and moment not in song_order:
-            song_order.append(moment)
-    expected = [m for m in SongMoment if m is not SongMoment.GLORIA]
-    assert song_order == expected
+    expected = [m.value for m in SongMoment if m is not SongMoment.GLORIA]
+    assert song_moments(plan) == expected
 
 
 def test_has_gloria_false_removes_gloria_even_with_a_song(
     template: MassTemplate, mass_26tc: Mass
 ) -> None:
     mass = mass_26tc.model_copy(update={"has_gloria": False})
-    plan = BuildPlanner().plan(template, mass, one_page_per_stanza(mass))
-    assert all(s.tag.moment is not SongMoment.GLORIA for s in kinds(template, plan))
+    plan = BuildPlanner().plan(template, mass, one_deck_per_song(mass))
+    assert all(s.tag.moment is not SongMoment.GLORIA for s in template_slides(template, plan))
+    assert SongMoment.GLORIA.value not in song_moments(plan)
 
 
 def test_blank_second_reading_removes_the_group(template: MassTemplate, mass_26tc: Mass) -> None:
     liturgy = mass_26tc.liturgy.model_copy(update={"second_reading": "  "})
     mass = mass_26tc.model_copy(update={"liturgy": liturgy})
-    plan = BuildPlanner().plan(template, mass, one_page_per_stanza(mass))
-    assert all(s.tag.group != SECOND_READING_GROUP for s in kinds(template, plan))
+    plan = BuildPlanner().plan(template, mass, one_deck_per_song(mass))
+    assert all(s.tag.group != SECOND_READING_GROUP for s in template_slides(template, plan))
 
 
 def test_song_without_pages_is_removed(template: MassTemplate, mass_26tc: Mass) -> None:
-    pages = one_page_per_stanza(mass_26tc)
-    pages[SongMoment.MANTRA] = []
-    plan = BuildPlanner().plan(template, mass_26tc, pages)
-    assert all(s.tag.moment is not SongMoment.MANTRA for s in kinds(template, plan))
+    decks = one_deck_per_song(mass_26tc)
+    decks[SongMoment.MANTRA] = SongDeck(path=Path("/cache/mantra.pptx"), pages=0)
+    plan = BuildPlanner().plan(template, mass_26tc, decks)
+    assert all(s.tag.moment is not SongMoment.MANTRA for s in template_slides(template, plan))
+    assert "mantra" not in song_moments(plan)
 
 
-def test_only_the_chosen_prayer_block_stays(template: MassTemplate, mass_26tc: Mass) -> None:
-    plan = BuildPlanner().plan(template, mass_26tc, one_page_per_stanza(mass_26tc))
-    block = [s for s in template.slides if s.tag.prayer is EucharisticPrayer.III]
-    assert all(s.index in plan.sources for s in block)
-
-
-def test_prayer_missing_from_the_template_is_an_error(
+def test_prayer_missing_from_the_folder_is_an_error(
     template: MassTemplate, mass_26tc: Mass
 ) -> None:
     liturgy = mass_26tc.liturgy.model_copy(update={"eucharistic_prayer": EucharisticPrayer.II})
     mass = mass_26tc.model_copy(update={"liturgy": liturgy})
     with pytest.raises(TemplateError, match="Oração Eucarística II"):
-        BuildPlanner().plan(template, mass, one_page_per_stanza(mass))
+        BuildPlanner().plan(template, mass, one_deck_per_song(mass))
 
 
 def test_plan_is_pure(template: MassTemplate, mass_26tc: Mass) -> None:
-    pages = {SongMoment.MANTRA: [SongPage(lines=[Line(text="x")], size_pt=40)]}
-    first = BuildPlanner().plan(template, mass_26tc, pages)
-    second = BuildPlanner().plan(template, mass_26tc, pages)
+    decks = {SongMoment.MANTRA: SongDeck(path=Path("/cache/x.pptx"), pages=1)}
+    first = BuildPlanner().plan(template, mass_26tc, decks)
+    second = BuildPlanner().plan(template, mass_26tc, decks)
     assert first == second

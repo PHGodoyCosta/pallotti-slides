@@ -1,15 +1,19 @@
-"""Build plan: which template slides go into the deck, in which order, with which texts.
+"""Build plan: which slides go into the deck, from which file, in which order, with which texts.
 
-Pure function of (template, Mass, song pages): no I/O, no XML (ARQUITETURA §5).
+Pure function of (template, Mass, song decks): no I/O, no XML (ARQUITETURA §5). The slides come
+from the template, from the chosen prayer block (``<prayers_dir>/<id>.pptx``, in place of the
+``@pallotti oe=slot`` marker) and from the cached song decks (``SongDeckCache``, in place of
+each song prototype).
 """
 
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from pallotti_slides.domain.enums import SongMoment
 from pallotti_slides.domain.models import Line, Mass
 from pallotti_slides.presentation.errors import TemplateError
-from pallotti_slides.presentation.paginator import SongPage
+from pallotti_slides.presentation.song_cache import SongDeck
 from pallotti_slides.presentation.template import (
     SECOND_READING_GROUP,
     SONG_LABEL_FIELD,
@@ -39,10 +43,15 @@ class TextContent:
 
 @dataclass(frozen=True)
 class TargetSlide:
-    """One slide of the generated deck: a copy of template slide ``source`` (0-based)."""
+    """One slide of the generated deck: a copy of slide ``source`` (0-based) of ``deck``.
+
+    ``deck`` is ``None`` for the template itself, or the path of another .pptx (prayer block,
+    cached song deck) whose slide is imported.
+    """
 
     source: int
     replacements: dict[str, TextContent] = field(default_factory=dict)
+    deck: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -76,17 +85,17 @@ class BuildPlanner:
         self,
         template: MassTemplate,
         mass: Mass,
-        pages: Mapping[SongMoment, list[SongPage]],
+        songs: Mapping[SongMoment, SongDeck],
     ) -> SlidePlan:
-        prayer = mass.liturgy.eucharistic_prayer
-        if prayer not in template.available_prayers():
+        block = template.prayer_block(mass.liturgy.eucharistic_prayer)
+        if template.prayer_slot() is None:
             raise TemplateError(
-                f"O modelo não tem o bloco da Oração Eucarística {prayer.value} (@pallotti oe=...)."
+                "O modelo não tem o slide marcador da Oração Eucarística (@pallotti oe=slot)."
             )
         active = {
             moment
-            for moment, song_pages in pages.items()
-            if song_pages and (moment is not SongMoment.GLORIA or mass.has_gloria)
+            for moment, deck in songs.items()
+            if deck.pages > 0 and (moment is not SongMoment.GLORIA or mass.has_gloria)
         }
         has_second_reading = bool((mass.liturgy.second_reading or "").strip())
         values = _plain_values(mass)
@@ -94,16 +103,20 @@ class BuildPlanner:
         targets: list[TargetSlide] = []
         for slide in template.slides:
             kind = slide.tag.kind
-            if kind is TagKind.INVALID:
+            if kind in (TagKind.INVALID, TagKind.PRAYER):
                 raise TemplateError(
                     f"Etiqueta inválida no slide {slide.index + 1} do modelo: {slide.tag.raw!r}."
                 )
             moment = slide.tag.moment
             if kind is TagKind.SONG:
                 if moment is not None and moment in active:
-                    targets.extend(self._song_slides(slide, moment, pages[moment], values))
+                    targets.extend(self._song_slides(slide, moment, songs[moment], values))
                 continue
-            if kind is TagKind.PRAYER and slide.tag.prayer is not prayer:
+            if kind is TagKind.PRAYER_SLOT:
+                targets.extend(
+                    TargetSlide(s.index, self._plain(s, values), deck=block.path)
+                    for s in block.slides
+                )
                 continue
             if kind is TagKind.GROUP:
                 if slide.tag.group == SECOND_READING_GROUP and not has_second_reading:
@@ -130,18 +143,10 @@ class BuildPlanner:
         self,
         slide: TemplateSlide,
         moment: SongMoment,
-        song_pages: list[SongPage],
+        deck: SongDeck,
         values: Mapping[str, str],
     ) -> list[TargetSlide]:
+        """One slide per page of the cached deck; only the label (and plain fields) change."""
         others = self._plain(slide, values, skip=frozenset({SONG_LABEL_FIELD, SONG_TEXT_FIELD}))
-        return [
-            TargetSlide(
-                slide.index,
-                {
-                    **others,
-                    SONG_LABEL_FIELD: TextContent(text=moment.label),
-                    SONG_TEXT_FIELD: TextContent(lines=tuple(page.lines), size_pt=page.size_pt),
-                },
-            )
-            for page in song_pages
-        ]
+        replacements = {**others, SONG_LABEL_FIELD: TextContent(text=moment.label)}
+        return [TargetSlide(page, dict(replacements), deck=deck.path) for page in range(deck.pages)]

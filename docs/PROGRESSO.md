@@ -9,7 +9,7 @@
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
 | M2 | ✅ | 156e50e | 2026-10-24 | aprovado pelo Pedro (M2-a..d ok) |
 | M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado; ajustes aplicados (M3-fix) |
-| M3b | ▶️ | — | 2026-10-24 | depois do M3; cache automático de cantos |
+| M3b | 🧑 aguardando | (este commit) | 2026-10-25 | abrir /tmp/saida-m3b (pptx/pdf); resultado idêntico ao M3 |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ✅ | cd1ec12 | 2026-10-25 | M5a + M5b; expected.json gerados pelo pipeline e conferidos (Pedro pode revisar) |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
@@ -45,6 +45,7 @@
 - 2026-10-24 — M3b: biblioteca de pptx (uma OE por arquivo; cache automático por canto, regenerado se letra/tipografia mudar); M3 termina como está (Pedro, TUI)
 - 2026-10-24 — D6: provedor padrão OpenAI; D7: todas as OEs do Missal 3ª ed., lista confirmada no M10 (Pedro, TUI)
 - 2026-10-24 — M3 aprovado com ajustes: rótulo "Canto de Saída"; refrão curto com fonte maior; texto nunca vaza, centralizado e grande; caixas do corpo alargadas (M3-b) e estendidas até perto do pé do slide, voltando à regra "a caixa define a área" (M3-a) (Pedro, TUI)
+- 2026-10-25 — M7-a: Letras.mus.br primeiro; quando o Cifra Club bloquear, contornar com curl_cffi (imitando navegador); se ainda falhar, pedir a letra colada (Pedro, TUI)
 - 2026-10-25 — LLM via LangChain (langchain-openai/anthropic), mantendo o Protocol LLMClient (Pedro, TUI)
 - 2026-10-25 — Repertório por link: sempre propor momentos e pedir confirmação; chat de acompanhamento e telas de confirmação na interface (Pedro, TUI)
 - 2026-10-25 — Refrão com bloco repetido aparece uma vez entre `/*` e `*/` (Pedro, TUI)
@@ -52,7 +53,7 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
-- M7-a: Cifra Club responde 403 ao httpx (HTTP/1.1 e HTTP/2, qualquer User-Agent) e 200 ao curl: bloqueio por fingerprint TLS. Opções: A) curl_cffi imitando navegador; B) curl do sistema; C) só Letras.mus.br + letra colada quando o Cifra bloquear
+- (resolvido) M7-a: Cifra Club responde 403 ao httpx (HTTP/1.1 e HTTP/2, qualquer User-Agent) e 200 ao curl: bloqueio por fingerprint TLS. Opções: A) curl_cffi imitando navegador; B) curl do sistema; C) só Letras.mus.br + letra colada quando o Cifra bloquear
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)

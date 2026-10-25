@@ -24,6 +24,7 @@ from pallotti_slides.presentation.measurer import TextMeasurer
 from pallotti_slides.presentation.paginator import SongPaginator
 from pallotti_slides.presentation.pdf import LibreOfficeConverter, PdfConverter
 from pallotti_slides.presentation.planner import BuildPlanner
+from pallotti_slides.presentation.song_cache import SongDeckCache
 from pallotti_slides.presentation.template import MassTemplate
 from pallotti_slides.songs.downloaders import (
     CifraClubDownloader,
@@ -134,6 +135,7 @@ def create_container(
         builder=PptxBuilder(),
         converter=converter if with_pdf else None,
         mass_repo=mass_repo,
+        song_cache=SongDeckCache(paths.data / "songs", template, paginator),
     )
 
     client: Any = llm or LazyLLMClient(settings)

@@ -22,6 +22,7 @@ from pallotti_slides.presentation.errors import PdfConversionError
 from pallotti_slides.presentation.measurer import TextMeasurer
 from pallotti_slides.presentation.paginator import SongPaginator
 from pallotti_slides.presentation.planner import BuildPlanner
+from pallotti_slides.presentation.song_cache import SongDeckCache
 from pallotti_slides.presentation.template import MassTemplate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,16 +54,37 @@ class FakeHistory:
         return len(self.saved)
 
 
-def generator(converter: object, history: FakeHistory | None = None) -> MassGenerator:
+def generator(
+    converter: object,
+    history: FakeHistory | None = None,
+    songs_dir: Path | None = None,
+    typography: TypographyConfig | None = None,
+) -> MassGenerator:
     fonts = FontLocator().locate()
+    template = MassTemplate.load()
+    paginator = SongPaginator(TextMeasurer(fonts.regular, fonts.bold), typography)
     return MassGenerator(
-        template=MassTemplate.load(),
-        paginator=SongPaginator(TextMeasurer(fonts.regular, fonts.bold), TypographyConfig()),
+        template=template,
+        paginator=paginator,
         planner=BuildPlanner(),
         builder=PptxBuilder(),
         converter=converter,  # type: ignore[arg-type]
         mass_repo=history,
+        song_cache=SongDeckCache(songs_dir, template, paginator) if songs_dir else None,
     )
+
+
+def cache_of(gen: MassGenerator) -> SongDeckCache:
+    cache = gen._song_cache
+    assert cache is not None
+    return cache
+
+
+def deck_texts(pptx: Path) -> list[list[str]]:
+    return [
+        sorted(s.text_frame.text for s in slide.shapes if s.has_text_frame)  # type: ignore[attr-defined]
+        for slide in Presentation(str(pptx)).slides
+    ]
 
 
 def labels(pptx: Path) -> list[str]:
@@ -91,6 +113,50 @@ def test_full_mass_songs_in_mass_order(tmp_path: Path) -> None:
     assert "Fl 2,1-11" not in " ".join(texts)  # no second reading
     assert result.pdf is not None and result.pdf.is_file()
     assert result.notices == []
+
+
+@needs_aptos
+def test_song_decks_are_cached_between_generations(tmp_path: Path) -> None:
+    songs = tmp_path / "songs"
+    mass = load_mass(FULL)
+    used = len(mass.songs) - 1  # has_gloria = false: the Gloria is not used
+    first = generator(None, songs_dir=songs)
+    result = first.generate(mass, tmp_path / "a")
+    assert len(cache_of(first).generated) == used  # one deck per song
+    assert sorted(songs.glob("*.pptx")) == sorted(cache_of(first).generated)
+
+    second = generator(None, songs_dir=songs)  # e.g. the program opened again
+    again = second.generate(mass, tmp_path / "b")
+    assert cache_of(second).generated == []
+    assert deck_texts(again.pptx) == deck_texts(result.pptx)
+
+    smaller = generator(None, songs_dir=songs, typography=TypographyConfig(max_font=44))
+    smaller.generate(mass, tmp_path / "c")
+    assert len(cache_of(smaller).generated) == used  # typography -> new decks
+
+
+@needs_aptos
+def test_same_song_in_another_moment_reuses_the_deck_with_its_label(tmp_path: Path) -> None:
+    songs = tmp_path / "songs"
+    mass = load_mass(FULL)
+    generator(None, songs_dir=songs).generate(mass, tmp_path / "a")
+    communion = mass.songs[SongMoment.COMMUNION]
+    moved = mass.model_copy(update={"songs": {**mass.songs, SongMoment.RECESSIONAL: communion}})
+    gen = generator(None, songs_dir=songs)
+    result = gen.generate(moved, tmp_path / "b")
+    assert cache_of(gen).generated == []  # same prototype: the communion deck is reused
+    found = labels(result.pptx)
+    assert found.count("Comunhão") == found.count("Canto de Saída") == 3
+    texts = deck_texts(result.pptx)
+    bodies = [[t for t in slide if t not in {m.label for m in SongMoment}] for slide in texts]
+    label_of = [
+        next((t for t in slide if t in {m.label for m in SongMoment}), None) for slide in texts
+    ]
+    communion_bodies = [b for b, label in zip(bodies, label_of, strict=True) if label == "Comunhão"]
+    recessional_bodies = [
+        b for b, label in zip(bodies, label_of, strict=True) if label == "Canto de Saída"
+    ]
+    assert communion_bodies == recessional_bodies
 
 
 def test_without_libreoffice_the_pptx_is_still_generated(tmp_path: Path) -> None:

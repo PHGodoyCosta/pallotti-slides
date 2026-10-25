@@ -109,6 +109,7 @@
 | `ErroPallotti`, `ErroLLM`, `ErroDownload`, `ErroModelo`, `ErroConversaoPdf` | `PallottiError`, `LLMError`, `DownloadError`, `TemplateError`, `PdfConversionError` |
 | onde ficam os erros | `domain/errors.py` (`PallottiError`), `llm/errors.py` (`LLMError`), `leaflet/errors.py` (`LeafletError`), `db/repositories.py` (`DuplicateError`, `NotFoundError`), `presentation/errors.py` (`TemplateError`, `PdfConversionError`) |
 | auxiliares do M3 | `BodyFormat`, `read_body_format()`, `song_area()` (presentation); `MassHistory`, `make_mass_generator()`, `load_mass()` (application/generate_mass.py); `contact_sheet()`, `pdf_page_count()` (presentation/preview.py, pdf.py); `pallotti generate --no-pdf --template` |
+| biblioteca de pptx (M3b) | `resources/eucharistic_prayers/<id>.pptx`; etiqueta `@pallotti oe=slot` (`TagKind.PRAYER_SLOT`, `PRAYER_SLOT_ID`); `PrayerBlock`, `load_prayer_blocks()`, `default_prayers_dir()`, `prayer_id()`; `MassTemplate.prayers`, `prayer_block()`, `prayer_slot()`, `load(path, prayers_dir)`; `SongDeck`, `SongDeckCache` (`presentation/song_cache.py`, `CACHE_VERSION`); `SlideImporter`, `SlideImportError`; `TargetSlide.deck`; `BuildPlanner.plan(template, mass, decks: dict[SongMoment, SongDeck])` |
 | ferramentas do modelo para o CLI | `application/template_tools.py` (`TemplateTools`) |
 | convenções de `presentation/` | `TemplateSlide.index` começa em 0; `Box` em EMU (`presentation/measurer.py`) |
 | `PALLOTTI_FONTES_DIR`, `PALLOTTI_DB_URL` | `PALLOTTI_FONTS_DIR`, `PALLOTTI_DB_URL` |
