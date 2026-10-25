@@ -1,6 +1,6 @@
 """Use case: generate the .pptx and .pdf of a Mass (SPEC F8, F9, F11).
 
-Minimal version of M3; M8 adds the history (``mass_repo``) and the container.
+Every generation is recorded in the history (``mass_repo``, wired by the container).
 """
 
 from dataclasses import dataclass, field
@@ -29,7 +29,7 @@ PDF_HELP = (
 
 
 class MassHistory(Protocol):
-    """Where generated Masses are recorded (``db.MassRepository``; wired in M8)."""
+    """Where generated Masses are recorded (``db.MassRepository``)."""
 
     def save(self, mass: Mass, files: MassFiles | None = None) -> int: ...
 
@@ -88,7 +88,15 @@ class MassGenerator:
             except PdfConversionError as error:
                 notices.append(Notice(level="warning", message=f"{error} {PDF_HELP}"))
         if self._mass_repo is not None:
-            self._mass_repo.save(mass, MassFiles(pptx=pptx, pdf=pdf))
+            try:
+                self._mass_repo.save(mass, MassFiles(pptx=pptx, pdf=pdf))
+            except Exception as error:  # history must never lose the generated files
+                notices.append(
+                    Notice(
+                        level="warning",
+                        message=f"A missa foi gerada, mas não entrou no histórico: {error}",
+                    )
+                )
         return GenerationResult(pptx=pptx, pdf=pdf, notices=notices)
 
     def _paginate(self, mass: Mass, notices: list[Notice]) -> dict[SongMoment, list[SongPage]]:

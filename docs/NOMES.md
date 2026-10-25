@@ -101,7 +101,8 @@
 |---|---|
 | `PreparadorMissa.preparar()`, `RascunhoMissa` | `MassPreparer.prepare()`, `MassDraft` |
 | `GeradorMissa.gerar(missa, pasta_saida)`, `ResultadoGeracao(pptx, pdf, avisos)` | `MassGenerator.generate(mass, output_dir)`, `GenerationResult(pptx, pdf, notices)` |
-| `criar_container(config)` | `create_container(settings)` |
+| `criar_container(config)` | `create_container(settings, ...)` → `Container`; `LazyLLMClient` |
+| auxiliares do M8 | `MassDraft.songs`, `MassDraft.to_mass(oe)`, `SongResolution(song, origin, notices)`, `SongResolverLike`, `LyricsOnlyResolver` (provisório até o M7), `LeafletExtractorLike`; CLI `pallotti history list\|show` |
 | `Tarefa` (sinais `concluida`, `falhou`, `progresso`), `EditorCanto` | `Task` (`finished`, `failed`, `progress`), `SongEditor` |
 | `Caminhos(dados, config, logs)`, `Configuracoes`, `ConfigTipografia(fonte_min, fonte_max, max_linhas)`, `LocalizadorFonte` | `Paths(data, config, logs)`, `Settings`, `TypographyConfig(min_font, max_font, max_lines)`, `FontLocator` |
 | `ErroPallotti`, `ErroLLM`, `ErroDownload`, `ErroModelo`, `ErroConversaoPdf` | `PallottiError`, `LLMError`, `DownloadError`, `TemplateError`, `PdfConversionError` |

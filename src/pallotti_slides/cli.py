@@ -7,13 +7,14 @@ from typing import Annotated
 import typer
 
 from pallotti_slides import __version__
-from pallotti_slides.application.generate_mass import load_mass, make_mass_generator
+from pallotti_slides.application.container import create_container
+from pallotti_slides.application.generate_mass import load_mass
 from pallotti_slides.application.leaflet_extraction import (
     extract_leaflet,
     make_leaflet_extractor,
 )
 from pallotti_slides.application.template_tools import TemplateTools
-from pallotti_slides.config import FontLocator, locate_soffice
+from pallotti_slides.config import FontLocator, load_settings, locate_soffice
 from pallotti_slides.domain.errors import PallottiError
 
 app = typer.Typer(
@@ -91,8 +92,11 @@ def generate(
 ) -> None:
     """Generate the .pptx (and .pdf) of a Mass; exit 1 on a fatal error."""
     try:
-        generator = make_mass_generator(template, with_pdf=pdf)
-        result = generator.generate(load_mass(mass), output)
+        container = create_container(load_settings(), template_path=template, with_pdf=pdf)
+        try:
+            result = container.generator.generate(load_mass(mass), output)
+        finally:
+            container.close()
     except PallottiError as error:
         typer.echo(f"ERRO: {error}", err=True)
         raise typer.Exit(1) from error
@@ -139,6 +143,51 @@ def extract_leaflet_command(
         typer.echo(f"{label}: {value if value not in (None, '') else '(não encontrado)'}")
     for notice in result.notices:
         typer.echo(f"[{notice.level}] {notice.message}", err=True)
+
+
+history_app = typer.Typer(help="Histórico de missas geradas.", no_args_is_help=True)
+app.add_typer(history_app, name="history")
+
+
+@history_app.command("list", help="Lista as missas geradas (mais recentes primeiro).")
+def history_list(
+    limit: Annotated[int, typer.Option("--limit", help="Máximo de missas listadas.", min=1)] = 50,
+) -> None:
+    """Print one line per saved Mass."""
+    try:
+        container = create_container(load_settings(), with_pdf=False)
+        try:
+            rows = container.mass_repo.list(limit)
+        finally:
+            container.close()
+    except PallottiError as error:
+        typer.echo(f"ERRO: {error}", err=True)
+        raise typer.Exit(1) from error
+    if not rows:
+        typer.echo("Nenhuma missa no histórico.")
+        return
+    for row in rows:
+        typer.echo(
+            f"{row.id:>4}  {row.date:%d/%m/%Y}  OE {row.eucharistic_prayer.value:<3}  "
+            f"{row.title}  {row.pptx_path or '(sem arquivo)'}"
+        )
+
+
+@history_app.command("show", help="Mostra uma missa do histórico como JSON.")
+def history_show(
+    mass_id: Annotated[int, typer.Argument(help="Número da missa (history list).")],
+) -> None:
+    """Print the saved Mass as JSON; exit 1 if it does not exist."""
+    try:
+        container = create_container(load_settings(), with_pdf=False)
+        try:
+            mass = container.mass_repo.get(mass_id)
+        finally:
+            container.close()
+    except PallottiError as error:
+        typer.echo(f"ERRO: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(mass.model_dump_json(indent=2))
 
 
 @template_app.command(
