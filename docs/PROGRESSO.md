@@ -7,10 +7,10 @@
 |---|---|---|---|---|
 | M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
-| M2 | ▶️ | — | 2026-10-24 | Sonnet high; padrões provisórios (M2-a..d) até o portão |
+| M2 | 🧑 aguardando | (este commit) | 2026-10-24 | abrir resources/template/mass_template.pptx; confirmar M2-a..d |
 | M3 | ☐ | — | — | — |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
-| M5 | ⏸ parcial | (este commit) | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
+| M5 | ⏸ parcial | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M7 | ☐ | — | — | — |
 | M8 | ☐ | — | — | — |

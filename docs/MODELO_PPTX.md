@@ -121,6 +121,11 @@ Baseado em `examples/Missa - 26° Dom do T.C - 26.09.2026 - OE III.pptx`
 **Decidido (2026-10-24):** a imagem separadora dos cantos é sempre a de Jesus
 (slides 4, 9, 14…). Os slides 42/44/61/65/68 são a hóstia.
 
+**Provisório no M2 (2026-10-24), a confirmar no portão:** bloco OE III =
+slides 47–60 do exemplo; fim = 66 Cordeiro, 67 "Senhor, eu não sou digno",
+68 hóstia (fixo), depois separador (Jesus) + comunhão, separador + pós-comunhão,
+separador + saída, 69 final. O modelo gerado tem 62 slides.
+
 **A confirmar com o usuário** (marco M2, com perguntas específicas): os limites
 exatos do bloco da OE (47–60), a posição dos novos cantos de comunhão,
 pós-comunhão e saída e de seus separadores, e se o slide 68 pertence ao grupo

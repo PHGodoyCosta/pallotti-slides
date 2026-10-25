@@ -8,11 +8,12 @@ import typer
 
 from pallotti_slides import __version__
 from pallotti_slides.application.leaflet_extraction import (
-    PallottiError,
     extract_leaflet,
     make_leaflet_extractor,
 )
+from pallotti_slides.application.template_tools import TemplateTools
 from pallotti_slides.config import FontLocator, locate_soffice
+from pallotti_slides.domain.errors import PallottiError
 
 app = typer.Typer(
     name="pallotti",
@@ -20,6 +21,20 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
+template_app = typer.Typer(
+    help="Inspeciona e pré-visualiza o modelo PowerPoint.",
+    no_args_is_help=True,
+)
+app.add_typer(template_app, name="template")
+
+TemplateOption = Annotated[
+    Path | None,
+    typer.Option(
+        "--template",
+        help="Modelo .pptx a usar (padrão: o modelo do programa).",
+        dir_okay=False,
+    ),
+]
 
 
 leaflet_app = typer.Typer(help="Folheto litúrgico (PDF).", no_args_is_help=True)
@@ -94,3 +109,45 @@ def extract_leaflet_command(
         typer.echo(f"{label}: {value if value not in (None, '') else '(não encontrado)'}")
     for notice in result.notices:
         typer.echo(f"[{notice.level}] {notice.message}", err=True)
+
+
+@template_app.command(
+    "inspect",
+    help="Lista os slides do modelo, suas etiquetas e problemas (sai 1 se houver erros).",
+)
+def template_inspect(template: TemplateOption = None) -> None:
+    """Print the slide table and the problems of the template; exit 1 on errors."""
+    try:
+        report = TemplateTools(template).inspect()
+    except PallottiError as error:
+        typer.echo(f"ERRO: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"Modelo: {report.path}")
+    typer.echo(f"{'Slide':>5}  {'Etiqueta':<28}  Campos")
+    for row in report.rows:
+        typer.echo(f"{row.number:>5}  {row.tag:<28}  {row.fields}")
+    typer.echo(f"Orações Eucarísticas: {', '.join(report.prayers) or 'nenhuma'}")
+    for notice in report.notices:
+        where = f" [{notice.field}]" if notice.field else ""
+        typer.echo(f"{notice.level.upper()}{where}: {notice.message}")
+    errors = sum(1 for notice in report.notices if notice.level == "error")
+    typer.echo(f"{len(report.rows)} slides, {errors} erro(s).")
+    if report.has_errors:
+        raise typer.Exit(1)
+
+
+@template_app.command(
+    "preview",
+    help="Gera um PNG por slide do modelo (precisa do LibreOffice e do pdftoppm).",
+)
+def template_preview(
+    output: Annotated[Path, typer.Option("--output", help="Pasta de saída dos PNGs.")],
+    template: TemplateOption = None,
+) -> None:
+    """Render the template to PNGs, one per slide."""
+    try:
+        pages = TemplateTools(template).preview(output)
+    except PallottiError as error:
+        typer.echo(f"ERRO: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"{len(pages)} imagens em {output}")
