@@ -14,8 +14,8 @@
 | M5 | ✅ | cd1ec12 | 2026-10-25 | M5a + M5b; expected.json gerados pelo pipeline e conferidos (Pedro pode revisar) |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M6b | ✅ | (ver log) | 2026-10-24 | gpt-6-astra padrão; live pula sem OPENAI_API_KEY |
-| M6c | ✅ | (este commit) | 2026-10-25 | LangChain; 40 testes llm/leaflet |
-| M7 | ▶️ | — | — | — |
+| M6c | ✅ | a053dc5 | 2026-10-25 | LangChain; 40 testes llm/leaflet |
+| M7 | ✅ | (este commit) | 2026-10-25 | 17 testes; repertório propõe e pede confirmação; HTTP/2 pendente (403 do Cifra) |
 | M8 | ✅ | 42ed840 | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
 | M9 | ☐ | — | — | — |
 | M10 | ☐ | — | — | aguarda P5 |

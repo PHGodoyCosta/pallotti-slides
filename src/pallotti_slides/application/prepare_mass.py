@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
-from pallotti_slides.domain.enums import EucharisticPrayer, LiturgicalSeason, SongMoment, SongSource
+from pallotti_slides.domain.enums import EucharisticPrayer, LiturgicalSeason, SongMoment
 from pallotti_slides.domain.errors import PallottiError
 from pallotti_slides.domain.models import (
     Celebration,
@@ -17,14 +17,15 @@ from pallotti_slides.domain.models import (
 )
 from pallotti_slides.domain.rules import default_has_gloria
 from pallotti_slides.leaflet.schema import LeafletData
-from pallotti_slides.songs.downloaders import RawLyrics
-from pallotti_slides.songs.parser import LyricsParser
+from pallotti_slides.songs.resolver import SongResolver
+from pallotti_slides.songs.web_search import SongCandidate
 
 __all__ = [
     "LeafletExtractorLike",
-    "LyricsOnlyResolver",
     "MassDraft",
     "MassPreparer",
+    "ResolverAdapter",
+    "SongInterpreterLike",
     "SongResolution",
     "SongResolverLike",
 ]
@@ -43,41 +44,49 @@ class SongResolution:
     song: Song | None
     origin: str  # "pasted" | "library" | "web" | "none"
     notices: list[Notice] = field(default_factory=list)
+    candidates: list[SongCandidate] = field(default_factory=list)
 
 
 class SongResolverLike(Protocol):
-    """Resolves a ``SongRequest`` into a song (the real resolver arrives in M7)."""
+    """Resolves a ``SongRequest`` into a song (``SongResolver`` through ``ResolverAdapter``)."""
 
     def resolve(self, request: SongRequest) -> SongResolution: ...
 
 
-class LyricsOnlyResolver:
-    """Provisional resolver: handles only pasted lyrics (``kind="lyrics"``)."""
+class SongInterpreterLike(Protocol):
+    """Turns free text into song requests (``RequestInterpreter``)."""
 
-    def __init__(self, parser: LyricsParser) -> None:
-        self._parser = parser
+    def interpret(self, free_text: str) -> list[SongRequest]: ...
+
+
+class ResolverAdapter:
+    """Presents ``SongResolver`` as a ``SongResolverLike``.
+
+    Open choices (candidates) are not applied automatically: they become a warning notice
+    and the candidates stay in ``SongResolution.candidates`` for the user to pick.
+    """
+
+    def __init__(self, resolver: SongResolver) -> None:
+        self._resolver = resolver
 
     def resolve(self, request: SongRequest) -> SongResolution:
-        field_name = f"songs.{request.moment.value}"
-        if request.kind != "lyrics":
-            return SongResolution(
-                song=None,
-                origin="none",
-                notices=[
-                    Notice(
-                        level="warning",
-                        message=(
-                            f"Canto de {request.moment.label}: a busca por título ou link "
-                            "estará disponível no M7. Cole a letra por enquanto."
-                        ),
-                        field=field_name,
-                    )
-                ],
+        result = self._resolver.resolve(request)
+        notices = list(result.notices)
+        if result.song is None and result.candidates:
+            notices.append(
+                Notice(
+                    level="warning",
+                    message=(
+                        f"Canto de {request.moment.label}: encontrei "
+                        f"{len(result.candidates)} possibilidade(s) para «{request.text}». "
+                        "Escolha uma."
+                    ),
+                    field=f"songs.{request.moment.value}",
+                )
             )
-        raw = RawLyrics(title=request.moment.label, text=request.text, source=SongSource.MANUAL)
-        song, notices = self._parser.parse(raw)
-        scoped = [n.model_copy(update={"field": n.field or field_name}) for n in notices]
-        return SongResolution(song=song, origin="pasted", notices=scoped)
+        return SongResolution(
+            song=result.song, origin=result.origin, notices=notices, candidates=result.candidates
+        )
 
 
 @dataclass(frozen=True)
@@ -128,9 +137,15 @@ class MassDraft:
 class MassPreparer:
     """Leaflet extraction + song resolution; each stage fails on its own."""
 
-    def __init__(self, extractor: LeafletExtractorLike, resolver: SongResolverLike) -> None:
+    def __init__(
+        self,
+        extractor: LeafletExtractorLike,
+        resolver: SongResolverLike,
+        interpreter: SongInterpreterLike | None = None,
+    ) -> None:
         self._extractor = extractor
         self._resolver = resolver
+        self._interpreter = interpreter
 
     def prepare(
         self,
@@ -168,13 +183,7 @@ class MassPreparer:
                         )
                     )
         if free_text and free_text.strip():
-            notices.append(
-                Notice(
-                    level="info",
-                    message="O texto livre ainda não é interpretado (disponível no M7).",
-                    field="free_text",
-                )
-            )
+            requests = self._merge_free_text(requests, free_text, notices)
 
         resolutions: dict[SongMoment, SongResolution] = {}
         for request in requests:
@@ -195,3 +204,20 @@ class MassPreparer:
             resolutions[request.moment] = resolution
             notices.extend(resolution.notices)
         return MassDraft(date=date, leaflet=data, resolutions=resolutions, notices=notices)
+
+    def _merge_free_text(
+        self, requests: list[SongRequest], free_text: str, notices: list[Notice]
+    ) -> list[SongRequest]:
+        """Requests from the free text fill only the moments the form left empty."""
+        if self._interpreter is None:
+            notices.append(
+                Notice(level="warning", message="Texto livre indisponível.", field="free_text")
+            )
+            return requests
+        try:
+            interpreted = self._interpreter.interpret(free_text)
+        except PallottiError as error:
+            notices.append(Notice(level="error", message=str(error), field="free_text"))
+            return requests
+        given = {request.moment for request in requests}
+        return [*requests, *(r for r in interpreted if r.moment not in given)]

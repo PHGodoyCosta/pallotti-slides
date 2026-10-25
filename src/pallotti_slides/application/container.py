@@ -7,7 +7,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel
 
 from pallotti_slides.application.generate_mass import MassGenerator
-from pallotti_slides.application.prepare_mass import LyricsOnlyResolver, MassPreparer
+from pallotti_slides.application.prepare_mass import MassPreparer, ResolverAdapter
 from pallotti_slides.config import (
     FontLocator,
     Paths,
@@ -15,7 +15,7 @@ from pallotti_slides.config import (
     TypographyConfig,
     default_db_url,
 )
-from pallotti_slides.db.repositories import MassRepository
+from pallotti_slides.db.repositories import MassRepository, SongRepository
 from pallotti_slides.db.session import apply_migrations, make_engine, session_factory
 from pallotti_slides.leaflet.extractor import LeafletExtractor
 from pallotti_slides.llm.client import LLMClient, SearchResult, create_llm_client
@@ -25,7 +25,16 @@ from pallotti_slides.presentation.paginator import SongPaginator
 from pallotti_slides.presentation.pdf import LibreOfficeConverter, PdfConverter
 from pallotti_slides.presentation.planner import BuildPlanner
 from pallotti_slides.presentation.template import MassTemplate
+from pallotti_slides.songs.downloaders import (
+    CifraClubDownloader,
+    LetrasMusDownloader,
+    LyricsDownloader,
+)
+from pallotti_slides.songs.interpreter import RequestInterpreter
 from pallotti_slides.songs.parser import ChorusDetector, LyricsParser
+from pallotti_slides.songs.repertoire import RepertoireImporter
+from pallotti_slides.songs.resolver import SongResolver
+from pallotti_slides.songs.web_search import WebSongSearcher
 
 __all__ = ["Container", "LazyLLMClient", "create_container"]
 
@@ -81,6 +90,10 @@ class Container:
     parser: LyricsParser
     generator: MassGenerator
     preparer: MassPreparer
+    song_repo: SongRepository
+    resolver: SongResolver
+    interpreter: RequestInterpreter
+    repertoire_importer: RepertoireImporter
 
     def close(self) -> None:
         self.session.close()
@@ -126,7 +139,11 @@ def create_container(
     client: Any = llm or LazyLLMClient(settings)
     extractor = LeafletExtractor(client, paths.data / "cache" / "leaflets")
     parser = LyricsParser(ChorusDetector(client))
-    preparer = MassPreparer(extractor, LyricsOnlyResolver(parser))
+    song_repo = SongRepository(session)
+    downloaders: list[LyricsDownloader] = [LetrasMusDownloader(), CifraClubDownloader()]
+    resolver = SongResolver(song_repo, downloaders, parser, WebSongSearcher(client))
+    interpreter = RequestInterpreter(client)
+    preparer = MassPreparer(extractor, ResolverAdapter(resolver), interpreter)
     return Container(
         settings=settings,
         paths=paths,
@@ -138,4 +155,8 @@ def create_container(
         parser=parser,
         generator=generator,
         preparer=preparer,
+        song_repo=song_repo,
+        resolver=resolver,
+        interpreter=interpreter,
+        repertoire_importer=RepertoireImporter(),
     )

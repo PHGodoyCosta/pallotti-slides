@@ -74,6 +74,7 @@
 | detecção do tipo de pedido; remoção de acordes | `detect_request_kind()` (`songs/parser.py`), `strip_chords()` (`songs/downloaders.py`) |
 | `InterpretadorPedido.interpretar()` | `RequestInterpreter.interpret()` |
 | `BuscadorWebCantos.buscar()`, `CandidatoCanto(titulo, artista, url)` | `WebSongSearcher.search()`, `SongCandidate(title, artist, url)` |
+| repertório por link; casos de uso de cantos | `RepertoireImporter` (`load`, `parse`), `RepertoireProposal` (`requires_confirmation` sempre verdadeiro), `ProposedSong`, `propose_moments()`; `InterpretedRequests`; `ALLOWED_DOMAINS`; `SongResolver.import_url`; `application/song_requests.py` (`resolve_text`, `import_song`, `propose_repertoire`), `ResolverAdapter`, `SongInterpreterLike`; CLI `pallotti songs repertoire <url>` |
 | `ResolvedorCantos` (`resolver`, `confirmar`), `ResultadoResolucao(canto, origem, candidatos, avisos)` | `SongResolver` (`resolve`, `confirm`), `ResolutionResult(song, origin, candidates, notices)` |
 | `DadosFolheto(…, observacoes)`, `ExtratorFolheto.extrair()` | `LeafletData(…, notes)`, `LeafletExtractor.extract()` |
 | `ClienteLLM` (`extrair_estruturado(instrucao, esquema, pdf, texto)`, `buscar_urls(consulta, dominios, maximo)`), `ResultadoBusca` | `LLMClient` (`extract_structured(instruction, schema, pdf, text)`, `search_urls(query, domains, max_results)`), `SearchResult` |

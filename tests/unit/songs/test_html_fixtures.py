@@ -21,7 +21,7 @@ from pallotti_slides.songs.downloaders import (
 from pallotti_slides.songs.parser import ChorusDetector, LyricsParser
 
 HTML = Path(__file__).resolve().parents[2] / "fixtures" / "html"
-CIFRA_FILES = sorted((HTML / "cifra_club").glob("*.html"))
+CIFRA_FILES = sorted(p for p in (HTML / "cifra_club").glob("*.html") if "__" in p.stem)
 LETRAS_FILES = sorted((HTML / "letras_mus").glob("*.html"))
 
 
