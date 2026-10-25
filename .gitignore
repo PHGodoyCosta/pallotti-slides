@@ -28,4 +28,10 @@ storage/
 .DS_Store
 # Fontes proprietárias (Aptos/Microsoft): uso local apenas, não redistribuir
 src/assets/fonts/
-src/pallotti_slides/recursos/fontes/
+src/pallotti_slides/resources/fonts/
+
+# Cobertura / build
+.coverage
+htmlcov/
+dist/
+*.egg-info/

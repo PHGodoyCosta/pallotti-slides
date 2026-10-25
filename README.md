@@ -1,69 +1,46 @@
-# GeradorPallottiSlide app
+# Pallotti Slides
 
-## Run the app
+Programa desktop (PySide6 + QFluentWidgets) que gera os slides da missa de domingo
+da Paróquia São Cristóvão: lê o folheto litúrgico (PDF) e os cantos, preenche um
+modelo PowerPoint fixo e exporta `.pptx` + `.pdf`. Tema visual: São Vicente Pallotti.
 
-### uv
+> Estado: em construção. Fundação (M0) pronta; a interface gráfica chega no M9.
 
-Run as a desktop app:
+## Requisitos
 
-```bash
-uv run flet run
-```
+- [uv](https://docs.astral.sh/uv/) (instala o Python 3.13 sozinho)
+- LibreOffice (`soffice`) para converter em PDF
+- Fonte **Aptos** instalada no sistema (licença Microsoft, não é distribuída com o
+  projeto). Em desenvolvimento: `export PALLOTTI_FONTS_DIR=src/assets/fonts`
+  (pasta ignorada pelo git).
 
-Run as a web app:
-
-```bash
-uv run flet run --web
-```
-
-For more details on running the app, refer to the [Getting Started Guide](https://flet.dev/docs/).
-
-## Build the app
-
-### Android
+## Como rodar
 
 ```bash
-flet build apk -v
+uv sync                      # instala as dependências
+uv run pallotti --help       # CLI
+uv run pallotti doctor  # confere Python, LibreOffice e Aptos
+uv run pallotti-gui          # interface gráfica (ainda não implementada)
 ```
 
-For more details on building and signing `.apk` or `.aab`, refer to the [Android Packaging Guide](https://flet.dev/docs/publish/android/).
-
-### iOS
+## Desenvolvimento
 
 ```bash
-flet build ipa -v
+uv run pytest                # testes offline
+uv run pytest -m soffice     # testes que precisam do LibreOffice
+uv run ruff check . && uv run ruff format .
+uv run mypy src
 ```
 
-For more details on building and signing `.ipa`, refer to the [iOS Packaging Guide](https://flet.dev/docs/publish/ios/).
+## Documentação
 
-### macOS
+- [`CLAUDE.md`](CLAUDE.md): regras do projeto
+- [`docs/SPEC.md`](docs/SPEC.md): funcionalidades e critérios de aceite
+- [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md): stack, camadas e contratos
+- [`docs/PLANO.md`](docs/PLANO.md): marcos M0–M11
+- [`docs/MODELO_PPTX.md`](docs/MODELO_PPTX.md): etiquetas do modelo PowerPoint
+- [`docs/ORQUESTRACAO.md`](docs/ORQUESTRACAO.md): papéis e fluxo de trabalho
 
-```bash
-flet build macos -v
-```
+## Licença
 
-For more details on building macOS package, refer to the [macOS Packaging Guide](https://flet.dev/docs/publish/macos/).
-
-### Linux
-
-```bash
-flet build linux -v
-```
-
-For more details on building Linux package, refer to the [Linux Packaging Guide](https://flet.dev/docs/publish/linux/).
-
-### Windows
-
-```bash
-flet build windows -v
-```
-
-For more details on building Windows package, refer to the [Windows Packaging Guide](https://flet.dev/docs/publish/windows/).
-
-### Web
-
-```bash
-flet build web -v
-```
-
-For more details on building Web app, refer to the [Web Packaging Guide](https://flet.dev/docs/publish/web/).
+GPL-3.0-or-later (ver [`LICENSE`](LICENSE)).
