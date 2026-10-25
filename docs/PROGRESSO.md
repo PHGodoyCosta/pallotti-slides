@@ -17,7 +17,7 @@
 | M6c | ✅ | a053dc5 | 2026-10-25 | LangChain; 40 testes llm/leaflet |
 | M7 | ✅ | 4ec4b8a | 2026-10-25 | 17 testes; repertório propõe e pede confirmação; Cifra Club bloqueia httpx (403 por fingerprint TLS; curl passa) — decisão M7-a com o Pedro |
 | M8 | ✅ | 42ed840 | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
-| M9 | ▶️ M9a | — | — | — |
+| M9 | ▶️ | M9a ok (ver log) | 2026-10-25 | M9a janela/navegação/tema/Início/Sobre/chat; próximos M9b–d |
 | M10 | ☐ | — | — | aguarda P5 |
 | M11 | ☐ | — | — | — |
 
