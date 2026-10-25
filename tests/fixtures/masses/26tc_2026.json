@@ -1,0 +1,461 @@
+{
+  "celebration": {
+    "title": "26° Domingo do Tempo Comum",
+    "short_title": null,
+    "date": "2026-09-26",
+    "season": "ordinary_time",
+    "year": null
+  },
+  "liturgy": {
+    "first_reading": "Ez 18,25-28",
+    "psalm_number": "24(25)",
+    "psalm_refrain": "Recordai, Senhor meu Deus, vossa ternura e compaixão!",
+    "second_reading": "Fl 2,1-11",
+    "gospel": "Mt 21,28-32",
+    "intercessions_response": "Vinde em nosso auxílio, Senhor!",
+    "eucharistic_prayer": "III",
+    "mystery_of_faith": "Salvador do mundo, salvai-nos. Vós que nos libertastes pela cruz e ressurreição!"
+  },
+  "has_gloria": true,
+  "songs": {
+    "mantra": {
+      "title": "Ó luz do Senhor",
+      "artist": null,
+      "source": "manual",
+      "source_url": null,
+      "stanzas": [
+        {
+          "id": 1,
+          "type": "chorus",
+          "lines": [
+            {
+              "text": "Ó luz do Senhor",
+              "bold": true
+            },
+            {
+              "text": "Que vem sobre a terra",
+              "bold": true
+            },
+            {
+              "text": "Inunda meu ser",
+              "bold": true
+            },
+            {
+              "text": "Permanece em nós",
+              "bold": true
+            }
+          ]
+        }
+      ],
+      "order": [
+        1
+      ]
+    },
+    "entrance": {
+      "title": "Me chamaste para caminhar na vida contigo",
+      "artist": null,
+      "source": "manual",
+      "source_url": null,
+      "stanzas": [
+        {
+          "id": 1,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Me chamaste para caminhar na vida contigo",
+              "bold": false
+            },
+            {
+              "text": "Decidi para sempre seguir-te, não voltar atrás",
+              "bold": false
+            },
+            {
+              "text": "Me puseste uma brasa no peito e uma flecha na alma",
+              "bold": false
+            },
+            {
+              "text": "É difícil agora viver sem lembrar-me de ti",
+              "bold": false
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "chorus",
+          "lines": [
+            {
+              "text": "Te amarei, Senhor, te amarei, Senhor",
+              "bold": true
+            },
+            {
+              "text": "Eu só encontro a paz e a alegria bem perto de ti (te amarei)",
+              "bold": true
+            },
+            {
+              "text": "Te amarei Senhor, te amarei Senhor",
+              "bold": true
+            },
+            {
+              "text": "Eu só encontro a paz e a alegria bem perto de ti",
+              "bold": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Eu pensei muitas vezes calar e não dar nem resposta",
+              "bold": false
+            },
+            {
+              "text": "Eu pensei na fuga esconder-me, ir longe de ti",
+              "bold": false
+            },
+            {
+              "text": "Mas tua força venceu e, ao final, eu fiquei seduzido",
+              "bold": false
+            },
+            {
+              "text": "É difícil agora viver sem saudades de ti",
+              "bold": false
+            }
+          ]
+        }
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        2
+      ]
+    },
+    "penitential_act": {
+      "title": "Eu confesso a Deus e a vós irmãos",
+      "artist": null,
+      "source": "manual",
+      "source_url": null,
+      "stanzas": [
+        {
+          "id": 1,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Eu confesso a Deus e a vós irmãos",
+              "bold": false
+            },
+            {
+              "text": "Tantas vezes pequei, não fui fiel",
+              "bold": false
+            },
+            {
+              "text": "Pensamentos e palavras, atitudes e omissões",
+              "bold": false
+            },
+            {
+              "text": "Por minha culpa, tão grande culpa",
+              "bold": false
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "chorus",
+          "lines": [
+            {
+              "text": "Senhor piedade! Cristo, piedade!",
+              "bold": true
+            },
+            {
+              "text": "Tem piedade ó Senhor!",
+              "bold": true
+            },
+            {
+              "text": "Senhor piedade! Cristo, piedade!",
+              "bold": true
+            },
+            {
+              "text": "Tem piedade ó Senhor!",
+              "bold": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Peço à Virgem Maria, nossa mãe",
+              "bold": false
+            },
+            {
+              "text": "E a vós meus irmãos, rogueis por mim",
+              "bold": false
+            },
+            {
+              "text": "A Deus pai que nos perdoa e nos sustenta em suas mãos",
+              "bold": false
+            },
+            {
+              "text": "Por seu amor",
+              "bold": false
+            },
+            {
+              "text": "Tão grande amor",
+              "bold": false
+            }
+          ]
+        }
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        2
+      ]
+    },
+    "gloria": {
+      "title": "Glória, glória, glória, glória",
+      "artist": null,
+      "source": "manual",
+      "source_url": null,
+      "stanzas": [
+        {
+          "id": 1,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Glória, glória, glória, glória",
+              "bold": true
+            },
+            {
+              "text": "Glória a Deus lá nas alturas",
+              "bold": false
+            },
+            {
+              "text": "Paz na terra aos seus amados",
+              "bold": false
+            },
+            {
+              "text": "A vos louvam Rei celeste",
+              "bold": false
+            },
+            {
+              "text": "Os que foram libertados",
+              "bold": false
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Deus e Pai nós Vos louvamos",
+              "bold": false
+            },
+            {
+              "text": "Adoramos, bendizemos",
+              "bold": false
+            },
+            {
+              "text": "Damos glória ao Vosso nome",
+              "bold": false
+            },
+            {
+              "text": "Vossos dons agradecemos",
+              "bold": false
+            },
+            {
+              "text": "Glória, glória, glória, glória",
+              "bold": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Senhor, nosso Jesus Cristo",
+              "bold": false
+            },
+            {
+              "text": "Unigênito do Pai",
+              "bold": false
+            },
+            {
+              "text": "Voz de Deus, Cordeiro Santo",
+              "bold": false
+            },
+            {
+              "text": "Nossas culpas, perdoai",
+              "bold": false
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Vós que estais junto do Pai",
+              "bold": false
+            },
+            {
+              "text": "Como nosso intercessor",
+              "bold": false
+            },
+            {
+              "text": "Acolhei nossos pedidos",
+              "bold": false
+            },
+            {
+              "text": "Atendei nosso clamor",
+              "bold": false
+            },
+            {
+              "text": "Glória, glória, glória, glória",
+              "bold": true
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Vós somente sois o Santo",
+              "bold": false
+            },
+            {
+              "text": "O Altíssimo, o Senhor",
+              "bold": false
+            },
+            {
+              "text": "Com o Espírito Divino",
+              "bold": false
+            },
+            {
+              "text": "De Deus Pai no esplendor",
+              "bold": false
+            },
+            {
+              "text": "Glória, glória, glória, glória",
+              "bold": true
+            }
+          ]
+        }
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "acclamation": {
+      "title": "Aleluia, aleluia, aleluia, aleluia",
+      "artist": null,
+      "source": "manual",
+      "source_url": null,
+      "stanzas": [
+        {
+          "id": 1,
+          "type": "chorus",
+          "lines": [
+            {
+              "text": "Aleluia, aleluia, aleluia, aleluia",
+              "bold": true
+            }
+          ]
+        }
+      ],
+      "order": [
+        1
+      ]
+    },
+    "offertory": {
+      "title": "Um coração para amar, pra perdoar e sentir",
+      "artist": null,
+      "source": "manual",
+      "source_url": null,
+      "stanzas": [
+        {
+          "id": 1,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Um coração para amar, pra perdoar e sentir",
+              "bold": false
+            },
+            {
+              "text": "Para chorar e sorrir, ao me criar Tu me destes",
+              "bold": false
+            },
+            {
+              "text": "Um coração pra sonhar, inquieto e sempre a bater",
+              "bold": false
+            },
+            {
+              "text": "Ansioso por entender as coisas que Tu disseste",
+              "bold": false
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "chorus",
+          "lines": [
+            {
+              "text": "Eis o que eu venho Te dar",
+              "bold": true
+            },
+            {
+              "text": "Eis o que eu ponho no altar",
+              "bold": true
+            },
+            {
+              "text": "Toma, Senhor, que ele é Teu",
+              "bold": true
+            },
+            {
+              "text": "Meu coração não é meu",
+              "bold": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "verse",
+          "lines": [
+            {
+              "text": "Quero que o meu coração seja tão cheio de paz",
+              "bold": false
+            },
+            {
+              "text": "Que não se sinta capaz de sentir ódio ou rancor",
+              "bold": false
+            },
+            {
+              "text": "Quero que a minha oração possa me amadurecer",
+              "bold": false
+            },
+            {
+              "text": "Leve-me a compreender as consequências do amor",
+              "bold": false
+            }
+          ]
+        }
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        2
+      ]
+    }
+  }
+}

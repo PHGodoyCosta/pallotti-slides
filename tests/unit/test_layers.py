@@ -63,9 +63,10 @@ def test_import_rules(file: Path) -> None:
     name = file.relative_to(ROOT).as_posix()
     layer = _layer(file)
 
-    # 1. domain imports nothing from the project
+    # 1. domain imports nothing from the project outside domain itself
     if layer == "domain":
-        assert not _internal(modules), f"{name} (domain) imports the project"
+        foreign = {m for m in _internal(modules) if not _is_under(m, f"{PACKAGE}.domain")}
+        assert not foreign, f"{name} (domain) imports the project: {foreign}"
 
     # 2. only ui imports PySide6 / qfluentwidgets
     if layer != "ui":

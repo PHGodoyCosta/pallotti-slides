@@ -6,7 +6,7 @@
 | Marco | Estado | Commit | Última atualização | Observação |
 |---|---|---|---|---|
 | M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
-| M1 | ▶️ | — | 2026-10-24 | perguntas respondidas; implementador Sonnet (high) |
+| M1 | 🧑 aguardando | (ver git log) | 2026-10-24 | revisar modelos e fixture 26tc_2026.json |
 | M2 | ☐ | — | — | perguntas antes: fim da missa, aclamação, Santo/Cordeiro, salmo/cântico |
 | M3 | ☐ | — | — | — |
 | M4 | ☐ | — | — | — |
