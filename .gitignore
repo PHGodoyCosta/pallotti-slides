@@ -26,3 +26,6 @@ storage/
 
 # macOS
 .DS_Store
+# Fontes proprietárias (Aptos/Microsoft): uso local apenas, não redistribuir
+src/assets/fonts/
+src/pallotti_slides/recursos/fontes/
