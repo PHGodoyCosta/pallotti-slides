@@ -15,7 +15,7 @@
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M6b | ✅ | (ver log) | 2026-10-24 | gpt-6-astra padrão; live pula sem OPENAI_API_KEY |
 | M6c | ✅ | a053dc5 | 2026-10-25 | LangChain; 40 testes llm/leaflet |
-| M7 | ✅ | (este commit) | 2026-10-25 | 17 testes; repertório propõe e pede confirmação; HTTP/2 pendente (403 do Cifra) |
+| M7 | ✅ | 4ec4b8a | 2026-10-25 | 17 testes; repertório propõe e pede confirmação; Cifra Club bloqueia httpx (403 por fingerprint TLS; curl passa) — decisão M7-a com o Pedro |
 | M8 | ✅ | 42ed840 | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
 | M9 | ☐ | — | — | — |
 | M10 | ☐ | — | — | aguarda P5 |
@@ -52,6 +52,7 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
+- M7-a: Cifra Club responde 403 ao httpx (HTTP/1.1 e HTTP/2, qualquer User-Agent) e 200 ao curl: bloqueio por fingerprint TLS. Opções: A) curl_cffi imitando navegador; B) curl do sistema; C) só Letras.mus.br + letra colada quando o Cifra bloquear
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)
