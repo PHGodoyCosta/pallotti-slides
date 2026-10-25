@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
 
 from pallotti_slides.application.container import Container
+from pallotti_slides.application.library import SongLibrary
 from pallotti_slides.application.mass_history import MassHistory
 from pallotti_slides.application.new_mass import NewMassService
 from pallotti_slides.application.settings_service import SettingsService
@@ -15,8 +16,8 @@ from pallotti_slides.ui.assets import image_path
 from pallotti_slides.ui.pages.about import AboutPage
 from pallotti_slides.ui.pages.history import HistoryPage
 from pallotti_slides.ui.pages.home import HomePage
+from pallotti_slides.ui.pages.library import LibraryPage
 from pallotti_slides.ui.pages.new_mass import NewMassPage
-from pallotti_slides.ui.pages.placeholder import PlaceholderPage
 from pallotti_slides.ui.pages.settings import SettingsPage
 
 
@@ -38,7 +39,7 @@ class MainWindow(FluentWindow):  # type: ignore[misc]
 
         self.home_page = HomePage()
         self.new_mass_page = NewMassPage(NewMassService(container))
-        self.library_page = PlaceholderPage("Biblioteca", "library-page")
+        self.library_page = LibraryPage(SongLibrary.from_container(container))
         self.history_page = HistoryPage(MassHistory(container.mass_repo))
         self.settings_page = SettingsPage(
             settings_service or SettingsService(container.paths.config)

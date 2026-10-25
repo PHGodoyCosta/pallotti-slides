@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from rapidfuzz import fuzz, process
-from sqlalchemy import select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -39,6 +39,27 @@ class Match:
     song: Song
     score: float
     song_id: int
+
+
+@dataclass(frozen=True)
+class SongUsage:
+    """How many Masses used a song and the date of the latest one."""
+
+    count: int = 0
+    last_date: dt.date | None = None
+
+
+@dataclass(frozen=True)
+class SongRecord:
+    """A library song with its metadata (searchable texts are accent-free)."""
+
+    id: int
+    song: Song
+    title_search: str
+    first_line_search: str
+    aliases: list[str]
+    usual_moments: list[SongMoment]
+    reviewed: bool
 
 
 @dataclass(frozen=True)
@@ -75,6 +96,18 @@ def _structure(song: Song) -> dict[str, object]:
         "stanzas": [stanza.model_dump(mode="json") for stanza in song.stanzas],
         "order": list(song.order),
     }
+
+
+def _to_record(row: SongRow) -> SongRecord:
+    return SongRecord(
+        id=row.id,
+        song=_to_song(row),
+        title_search=row.title_search,
+        first_line_search=row.first_line_search,
+        aliases=[a.alias_search for a in row.aliases],
+        usual_moments=[SongMoment(value) for value in row.usual_moments],
+        reviewed=row.reviewed,
+    )
 
 
 def _to_song(row: SongRow) -> Song:
@@ -147,8 +180,82 @@ class SongRepository:
         self._commit(f"Já existe um canto com a URL {song.source_url}.")
 
     def delete(self, song_id: int) -> None:
-        self._session.delete(self._row(song_id))
+        self._row(song_id)
+        self._session.execute(delete(SongAliasRow).where(SongAliasRow.song_id == song_id))
+        self._session.execute(delete(SongRow).where(SongRow.id == song_id))
         self._session.commit()
+        self._session.expire_all()
+
+    def record(self, song_id: int) -> SongRecord:
+        """The song with its metadata. ``NotFoundError`` if missing."""
+        return _to_record(self._row(song_id))
+
+    def records(self) -> list[SongRecord]:
+        """Every song with its metadata, ordered by title."""
+        rows = self._session.scalars(select(SongRow).order_by(SongRow.title_search, SongRow.id))
+        return [_to_record(row) for row in rows]
+
+    def usage(self, song_id: int) -> SongUsage:
+        """Number of Masses that used the song and the latest date."""
+        self._row(song_id)
+        return self.usage_all().get(song_id, SongUsage())
+
+    def usage_all(self) -> dict[int, SongUsage]:
+        """Usage of every song that appears in at least one Mass."""
+        query = (
+            select(MassSongRow.song_id, func.count(), func.max(MassRow.date))
+            .join(MassRow, MassRow.id == MassSongRow.mass_id)
+            .where(MassSongRow.song_id.is_not(None))
+            .group_by(MassSongRow.song_id)
+        )
+        return {
+            song_id: SongUsage(count=count, last_date=last)
+            for song_id, count, last in self._session.execute(query)
+            if song_id is not None
+        }
+
+    def remove_alias(self, song_id: int, alias: str) -> None:
+        """Remove an alias of the song (no error if it does not exist)."""
+        self._row(song_id)
+        self._session.execute(
+            delete(SongAliasRow).where(
+                SongAliasRow.song_id == song_id,
+                SongAliasRow.alias_search == normalize_search(alias),
+            )
+        )
+        self._session.commit()
+        self._session.expire_all()
+
+    def merge(self, keep_id: int, drop_id: int) -> None:
+        """Fold ``drop_id`` into ``keep_id`` in one transaction and delete ``drop_id``.
+
+        Moves aliases, uses the dropped title as an alias, repoints ``mass_songs`` and
+        unions the usual moments.
+        """
+        if keep_id == drop_id:
+            raise ValueError("Escolha dois cantos diferentes para mesclar.")
+        try:
+            self._session.expire_all()
+            keep = self._row(keep_id)
+            drop = self._row(drop_id)
+            known = {a.alias_search for a in keep.aliases} | {keep.title_search}
+            moved = [a.alias_search for a in drop.aliases] + [drop.title_search]
+            moments = list(dict.fromkeys([*keep.usual_moments, *drop.usual_moments]))
+            self._session.execute(delete(SongAliasRow).where(SongAliasRow.song_id == drop_id))
+            self._session.execute(
+                update(MassSongRow).where(MassSongRow.song_id == drop_id).values(song_id=keep_id)
+            )
+            for alias in dict.fromkeys(moved):
+                if alias and alias not in known:
+                    self._session.add(SongAliasRow(song_id=keep_id, alias_search=alias))
+                    known.add(alias)
+            keep.usual_moments = moments
+            self._session.execute(delete(SongRow).where(SongRow.id == drop_id))
+            self._session.commit()
+        except Exception:
+            self._session.rollback()
+            raise
+        self._session.expire_all()
 
     def list_all(self) -> list[tuple[int, Song]]:
         rows = self._session.scalars(select(SongRow).order_by(SongRow.title_search)).all()

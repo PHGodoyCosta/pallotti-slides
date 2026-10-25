@@ -17,7 +17,7 @@
 | M6c | ✅ | a053dc5 | 2026-10-25 | LangChain; 40 testes llm/leaflet |
 | M7 | ✅ | 4ec4b8a | 2026-10-25 | 17 testes; repertório propõe e pede confirmação; Cifra Club bloqueia httpx (403 por fingerprint TLS; curl passa) — decisão M7-a com o Pedro |
 | M8 | ✅ | 42ed840 | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
-| M9 | ▶️ | M9a ok (ver log) | 2026-10-25 | M9a janela/navegação/tema/Início/Sobre/chat; próximos M9b–d |
+| M9 | 🧑 aguardando | M9a 7722e6c, M9b 52b37d1, M9c (ver log), M9d b7d1a86 | 2026-10-25 | Pedro executa o roteiro manual (pallotti-gui) |
 | M10 | ☐ | — | — | aguarda P5 |
 | M11 | ☐ | — | — | — |
 
@@ -53,6 +53,7 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
+- Retomar: M9 portão (roteiro manual), M3b portão, M10 aguarda respostas das OEs (P5), M11 depois do M9. Barra lateral: destaque fica em Histórico ao abrir Configurações (verificar)
 - (resolvido em M7-a) bloqueio do Cifra Club: fetcher com fallback curl_cffi
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar

@@ -1,7 +1,8 @@
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import cast
+from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 
@@ -11,7 +12,10 @@ from pallotti_slides.application.container import Container
 from pallotti_slides.application.mass_history import MassSummary
 from pallotti_slides.application.settings_service import SettingsService
 from pallotti_slides.config import Paths
+from pallotti_slides.db.repositories import SongRepository
+from pallotti_slides.db.session import apply_migrations, make_engine, session_factory
 from pallotti_slides.domain.models import Mass
+from pallotti_slides.songs.parser import ChorusDetector, LyricsParser
 from pallotti_slides.ui.main_window import MainWindow
 
 
@@ -58,6 +62,11 @@ class FakeContainer:
     def __init__(self) -> None:
         self.mass_repo = FakeMassRepo()
         self.paths = Paths(data=Path("."), config=Path("config.json"), logs=Path("."))
+        engine = make_engine("sqlite://")
+        apply_migrations(engine)
+        self.song_repo = SongRepository(session_factory(engine)())
+        self.parser = LyricsParser(ChorusDetector())
+        self.resolver: Any = SimpleNamespace()
 
     def close(self) -> None:
         self.closed = True
