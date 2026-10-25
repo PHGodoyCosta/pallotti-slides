@@ -11,11 +11,11 @@
 | M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado; ajustes aplicados (M3-fix) |
 | M3b | ▶️ | — | 2026-10-24 | depois do M3; cache automático de cantos |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
-| M5 | ✅ | (este commit) | 2026-10-25 | M5a + M5b; expected.json gerados pelo pipeline e conferidos (Pedro pode revisar) |
+| M5 | ✅ | cd1ec12 | 2026-10-25 | M5a + M5b; expected.json gerados pelo pipeline e conferidos (Pedro pode revisar) |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M6b | ✅ | (ver log) | 2026-10-24 | gpt-6-astra padrão; live pula sem OPENAI_API_KEY |
-| M6c | ▶️ | — | 2026-10-25 | migrar llm/ para LangChain |
-| M7 | ☐ | — | — | — |
+| M6c | ✅ | (este commit) | 2026-10-25 | LangChain; 40 testes llm/leaflet |
+| M7 | ▶️ | — | — | — |
 | M8 | ✅ | 42ed840 | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
 | M9 | ☐ | — | — | — |
 | M10 | ☐ | — | — | aguarda P5 |

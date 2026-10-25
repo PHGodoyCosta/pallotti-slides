@@ -9,12 +9,16 @@ import hashlib
 import json
 import logging
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any, Protocol, TypeVar
+from urllib.parse import urlparse
 
 import anthropic
-from pydantic import BaseModel
+from langchain_anthropic import ChatAnthropic
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import BaseModel, SecretStr
 
 from pallotti_slides.config import Settings
 from pallotti_slides.llm.errors import LLMError
@@ -120,7 +124,7 @@ def create_llm_client(
 
 
 def _translate_error(error: Exception) -> LLMError:
-    """Turn an SDK exception into a user-facing ``LLMError`` (never logs the key)."""
+    """Turn an Anthropic SDK exception into a user-facing ``LLMError`` (never logs the key)."""
     if isinstance(error, anthropic.AuthenticationError | anthropic.PermissionDeniedError):
         return LLMError(
             "A chave da API da Anthropic foi recusada. Confira a chave nas Configurações."
@@ -143,19 +147,64 @@ def _translate_error(error: Exception) -> LLMError:
     return LLMError("Falha inesperada ao falar com a API da Anthropic.")
 
 
+def allowed_url(url: str, domains: list[str]) -> bool:
+    """Whether ``url`` is on one of ``domains`` (or a subdomain of one)."""
+    host = (urlparse(url).hostname or "").lower()
+    return any(
+        host == d or host.endswith("." + d) for d in (x.lower().lstrip(".") for x in domains)
+    )
+
+
+def collect_results(
+    hits: Iterable[tuple[str, str]], domains: list[str], max_results: int
+) -> list[SearchResult]:
+    """Dedupe ``(url, title)`` pairs, keep only allowed domains, cap at ``max_results``."""
+    results: list[SearchResult] = []
+    seen: set[str] = set()
+    for url, title in hits:
+        if url and url not in seen and allowed_url(url, domains):
+            seen.add(url)
+            results.append(SearchResult(url=url, title=title or ""))
+    return results[:max_results]
+
+
+def pick(item: Any, name: str) -> Any:
+    """Field of a block that may be a dict or an object."""
+    return item.get(name) if isinstance(item, dict) else getattr(item, name, None)
+
+
+def content_blocks(message: Any) -> list[Any]:
+    """Message content as a list of blocks (a plain string becomes a text block)."""
+    content = message.content
+    if isinstance(content, str):
+        return [{"type": "text", "text": content}]
+    return list(content)
+
+
+SEARCH_PROMPT = "Busque nos sites permitidos: {query}. Não escreva letras."
+DEFAULT_TEXT = "Extraia os dados conforme as instruções."
+
+
 class ClaudeClient:
-    """``LLMClient`` backed by the ``anthropic`` SDK."""
+    """``LLMClient`` backed by LangChain's ``ChatAnthropic``."""
 
     def __init__(
         self,
         api_key: str,
         model: str = DEFAULT_MODEL,
         effort: str = "low",
-        client: Any | None = None,
+        chat_model: BaseChatModel | None = None,
     ) -> None:
-        self._model = model
-        self._effort = effort
-        self._client: Any = client if client is not None else anthropic.Anthropic(api_key=api_key)
+        self._chat: BaseChatModel = (
+            chat_model
+            if chat_model is not None
+            else ChatAnthropic(  # type: ignore[call-arg]
+                model_name=model,
+                api_key=SecretStr(api_key),
+                effort=effort,  # type: ignore[arg-type]
+                max_tokens=4096,
+            )
+        )
 
     @classmethod
     def from_environment(
@@ -182,35 +231,31 @@ class ClaudeClient:
         if pdf is not None:
             content.append(
                 {
-                    "type": "document",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "application/pdf",
-                        "data": base64.standard_b64encode(pdf).decode("ascii"),
-                    },
+                    "type": "file",
+                    "base64": base64.standard_b64encode(pdf).decode("ascii"),
+                    "mime_type": "application/pdf",
                 }
             )
-        content.append({"type": "text", "text": text or "Extraia os dados conforme as instruções."})
+        content.append({"type": "text", "text": text or DEFAULT_TEXT})
+        messages = [SystemMessage(instruction), HumanMessage(content=content)]  # type: ignore[arg-type]
         try:
-            response = self._client.messages.parse(
-                model=self._model,
-                max_tokens=4096,
-                system=instruction,
-                messages=[{"role": "user", "content": content}],
-                output_format=schema,
-                output_config={"effort": self._effort},
+            runnable = self._chat.with_structured_output(
+                schema, method="json_schema", include_raw=True
             )
-        except anthropic.AnthropicError as error:
+            out: dict[str, Any] = runnable.invoke(messages)  # type: ignore[assignment]
+        except Exception as error:
             _log.warning("Falha na chamada ao LLM: %s", type(error).__name__)
             raise _translate_error(error) from error
-        if response.stop_reason == "refusal":
+        raw = out["raw"]
+        reason = (getattr(raw, "response_metadata", None) or {}).get("stop_reason")
+        if reason == "refusal":
             raise LLMError("O modelo se recusou a processar este arquivo.")
-        if response.stop_reason == "max_tokens":
+        if reason == "max_tokens":
             raise LLMError("A resposta do modelo foi cortada antes de terminar. Tente de novo.")
-        parsed = response.parsed_output
-        if parsed is None:
+        parsed = out["parsed"]
+        if not isinstance(parsed, schema):
             raise LLMError("O modelo não devolveu uma resposta no formato esperado.")
-        return parsed  # type: ignore[no-any-return]
+        return parsed
 
     def search_urls(
         self, *, query: str, domains: list[str], max_results: int
@@ -222,36 +267,21 @@ class ClaudeClient:
             "max_uses": 3,
         }
         try:
-            response = self._client.messages.create(
-                model=self._model,
-                max_tokens=2048,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"Busque nos sites permitidos: {query}. Não escreva letras.",
-                    }
-                ],
-                tools=[tool],
-                output_config={"effort": self._effort},
-            )
-        except anthropic.AnthropicError as error:
+            response = self._chat.bind_tools([tool]).invoke(SEARCH_PROMPT.format(query=query))
+        except Exception as error:
             _log.warning("Falha na busca web: %s", type(error).__name__)
             raise _translate_error(error) from error
-        if response.stop_reason == "refusal":
+        if (getattr(response, "response_metadata", None) or {}).get("stop_reason") == "refusal":
             raise LLMError("O modelo se recusou a fazer esta busca.")
-        results: list[SearchResult] = []
-        seen: set[str] = set()
-        for block in response.content:
-            if getattr(block, "type", None) != "web_search_tool_result":
+        hits: list[tuple[str, str]] = []
+        for block in content_blocks(response):
+            if pick(block, "type") != "web_search_tool_result":
                 continue
-            hits = block.content
-            if not isinstance(hits, list):  # error payload
+            found = pick(block, "content")
+            if not isinstance(found, list):  # error payload
                 continue
-            for hit in hits:
-                if hit.url not in seen:
-                    seen.add(hit.url)
-                    results.append(SearchResult(url=hit.url, title=hit.title or ""))
-        return results[:max_results]
+            hits.extend((pick(h, "url") or "", pick(h, "title") or "") for h in found)
+        return collect_results(hits, domains, max_results)
 
 
 class FakeLLMClient:

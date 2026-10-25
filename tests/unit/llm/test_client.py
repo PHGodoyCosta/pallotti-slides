@@ -1,11 +1,11 @@
+import base64
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any
 
 import anthropic
 import httpx
 import pytest
-from pydantic import BaseModel
+from chat_fakes import Out, make_chat, status_error
+from langchain_core.messages import AIMessage, HumanMessage
 
 from pallotti_slides.domain.errors import PallottiError
 from pallotti_slides.llm.client import (
@@ -17,9 +17,7 @@ from pallotti_slides.llm.client import (
 )
 from pallotti_slides.llm.errors import LLMError
 
-
-class Out(BaseModel):
-    value: str | None = None
+URL = "https://api.anthropic.com/v1/messages"
 
 
 def test_key_from_keyring_wins() -> None:
@@ -38,79 +36,92 @@ def test_no_key_gives_friendly_error() -> None:
     assert isinstance(info.value, PallottiError)
 
 
-class _Messages:
-    def __init__(self, response: Any = None, error: Exception | None = None) -> None:
-        self.response, self.error, self.kwargs = response, error, {}
-
-    def parse(self, **kwargs: Any) -> Any:
-        self.kwargs = kwargs
-        if self.error:
-            raise self.error
-        return self.response
-
-    create = parse
+def _client(chat: object) -> ClaudeClient:
+    return ClaudeClient("k", chat_model=chat)  # type: ignore[arg-type]
 
 
-def _client(messages: _Messages) -> ClaudeClient:
-    return ClaudeClient("k", client=SimpleNamespace(messages=messages))
-
-
-def test_extract_sends_pdf_document_and_schema() -> None:
-    messages = _Messages(SimpleNamespace(stop_reason="end_turn", parsed_output=Out(value="x")))
-    result = _client(messages).extract_structured(instruction="i", schema=Out, pdf=b"%PDF-1")
+def test_extract_returns_parsed_and_sends_pdf_block() -> None:
+    chat = make_chat(parsed=Out(value="x"), reply=AIMessage("", response_metadata={}))
+    result = _client(chat).extract_structured(instruction="i", schema=Out, pdf=b"%PDF-1")
     assert result.value == "x"
-    block = messages.kwargs["messages"][0]["content"][0]
-    assert block["type"] == "document"
-    assert block["source"]["media_type"] == "application/pdf"
-    assert messages.kwargs["output_format"] is Out
-    assert messages.kwargs["model"] == "claude-opus-5-5"
+    assert chat.schemas[0][0] is Out
+    system, human = chat.seen[0]
+    assert system.content == "i"
+    block = human.content[0]
+    assert block["type"] == "file"
+    assert block["mime_type"] == "application/pdf"
+    assert base64.b64decode(block["base64"]) == b"%PDF-1"
 
 
-def test_refusal_becomes_llm_error() -> None:
-    messages = _Messages(SimpleNamespace(stop_reason="refusal", parsed_output=None))
+def test_real_chat_model_payload_has_document_effort_and_tool() -> None:
+    client = ClaudeClient("k")
+    chat = client._chat
+    block = {"type": "file", "base64": "AAA", "mime_type": "application/pdf"}
+    payload = chat._get_request_payload([HumanMessage(content=[block])])  # type: ignore[attr-defined]
+    assert payload["messages"][0]["content"][0]["type"] == "document"
+    assert payload["output_config"]["effort"] == "low"
+    assert payload["model"] == "claude-opus-5-5"
+
+
+def test_refusal_and_truncation_become_llm_error() -> None:
+    refused = make_chat(reply=AIMessage("", response_metadata={"stop_reason": "refusal"}))
     with pytest.raises(LLMError, match="recusou"):
-        _client(messages).extract_structured(instruction="i", schema=Out)
-
-
-def _status_error(cls: type[anthropic.APIStatusError], code: int) -> anthropic.APIStatusError:
-    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
-    return cls("x", response=httpx.Response(code, request=request), body=None)
+        _client(refused).extract_structured(instruction="i", schema=Out)
+    cut = make_chat(reply=AIMessage("", response_metadata={"stop_reason": "max_tokens"}))
+    with pytest.raises(LLMError, match="cortada"):
+        _client(cut).extract_structured(instruction="i", schema=Out)
+    empty = make_chat(reply=AIMessage("", response_metadata={}))
+    with pytest.raises(LLMError, match="formato"):
+        _client(empty).extract_structured(instruction="i", schema=Out)
 
 
 @pytest.mark.parametrize(
     ("error", "fragment"),
     [
-        (_status_error(anthropic.RateLimitError, 429), "Limite de uso"),
-        (_status_error(anthropic.AuthenticationError, 401), "chave"),
+        (status_error(anthropic.RateLimitError, 429, URL), "Limite de uso"),
+        (status_error(anthropic.AuthenticationError, 401, URL), "chave"),
         (
-            anthropic.APIConnectionError(
-                request=httpx.Request("POST", "https://api.anthropic.com")
-            ),
+            anthropic.APIConnectionError(request=httpx.Request("POST", URL)),
             "Sem conexão",
         ),
     ],
 )
 def test_sdk_errors_are_translated(error: Exception, fragment: str) -> None:
     with pytest.raises(LLMError, match=fragment):
-        _client(_Messages(error=error)).extract_structured(instruction="i", schema=Out)
+        _client(make_chat(error=error)).extract_structured(instruction="i", schema=Out)
+    with pytest.raises(LLMError, match=fragment):
+        _client(make_chat(error=error)).search_urls(query="q", domains=["a.com"], max_results=1)
 
 
-def test_search_urls_uses_allowed_domains_and_dedupes() -> None:
-    hit = lambda url: SimpleNamespace(url=url, title="t")  # noqa: E731
+def test_search_urls_filters_domains_and_dedupes() -> None:
+    hit = lambda url: {"type": "web_search_result", "url": url, "title": "t"}  # noqa: E731
     blocks = [
-        SimpleNamespace(type="text"),
-        SimpleNamespace(
-            type="web_search_tool_result",
-            content=[hit("https://a"), hit("https://a"), hit("https://b")],
-        ),
-        SimpleNamespace(type="web_search_tool_result", content=SimpleNamespace(error_code="x")),
+        {"type": "text", "text": "texto livre do modelo"},
+        {
+            "type": "web_search_tool_result",
+            "content": [
+                hit("https://letras.mus.br/a"),
+                hit("https://letras.mus.br/a"),
+                hit("https://www.letras.mus.br/b"),
+                hit("https://evil.com/c"),
+            ],
+        },
+        {"type": "web_search_tool_result", "content": {"error_code": "x"}},
     ]
-    messages = _Messages(SimpleNamespace(stop_reason="end_turn", content=blocks))
-    found = _client(messages).search_urls(query="q", domains=["letras.mus.br"], max_results=5)
-    assert [r.url for r in found] == ["https://a", "https://b"]
-    tool = messages.kwargs["tools"][0]
+    chat = make_chat(reply=AIMessage(blocks, response_metadata={}))  # type: ignore[arg-type]
+    found = _client(chat).search_urls(query="q", domains=["letras.mus.br"], max_results=5)
+    assert [r.url for r in found] == ["https://letras.mus.br/a", "https://www.letras.mus.br/b"]
+    assert found[0].title == "t"
+    tool = chat.tools[0]
     assert tool["type"] == "web_search_20260209"
     assert tool["allowed_domains"] == ["letras.mus.br"]
+    assert len(_client(chat).search_urls(query="q", domains=["letras.mus.br"], max_results=1)) == 1
+
+
+def test_search_refusal() -> None:
+    chat = make_chat(reply=AIMessage("", response_metadata={"stop_reason": "refusal"}))
+    with pytest.raises(LLMError, match="recusou"):
+        _client(chat).search_urls(query="q", domains=[], max_results=1)
 
 
 def test_fake_client_without_recording_fails_friendly(tmp_path: Path) -> None:

@@ -1,113 +1,114 @@
+import base64
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any
 
 import httpx
 import openai
 import pytest
-from pydantic import BaseModel
+from chat_fakes import Out, make_chat, status_error
+from langchain_core.messages import AIMessage, HumanMessage
 
 from pallotti_slides.config import Settings
 from pallotti_slides.llm.client import ClaudeClient, create_llm_client, no_key_message
 from pallotti_slides.llm.errors import LLMError
 from pallotti_slides.llm.openai_client import OpenAIClient
 
-
-class Out(BaseModel):
-    value: str | None = None
+URL = "https://api.openai.com/v1/responses"
 
 
-class _Responses:
-    def __init__(self, response: Any = None, error: Exception | None = None) -> None:
-        self.response, self.error, self.kwargs = response, error, {}
-
-    def parse(self, **kwargs: Any) -> Any:
-        self.kwargs = kwargs
-        if self.error:
-            raise self.error
-        return self.response
-
-    create = parse
+def _client(chat: object) -> OpenAIClient:
+    return OpenAIClient("k", chat_model=chat)  # type: ignore[arg-type]
 
 
-def _client(responses: _Responses) -> OpenAIClient:
-    return OpenAIClient("k", client=SimpleNamespace(responses=responses))
-
-
-def _message(*parts: Any) -> Any:
-    return SimpleNamespace(type="message", content=list(parts))
-
-
-def test_extract_sends_pdf_as_input_file_and_schema() -> None:
-    responses = _Responses(
-        SimpleNamespace(status="completed", output=[], output_parsed=Out(value="x"))
-    )
-    result = _client(responses).extract_structured(instruction="i", schema=Out, pdf=b"%PDF-1")
+def test_extract_returns_parsed_and_sends_pdf_file_block() -> None:
+    chat = make_chat(parsed=Out(value="x"), reply=AIMessage("", response_metadata={}))
+    result = _client(chat).extract_structured(instruction="i", schema=Out, pdf=b"%PDF-1")
     assert result.value == "x"
-    block = responses.kwargs["input"][0]["content"][0]
-    assert block["type"] == "input_file"
-    assert block["detail"] == "high"
-    assert block["file_data"].startswith("data:application/pdf;base64,")
-    assert responses.kwargs["text_format"] is Out
-    assert responses.kwargs["instructions"] == "i"
-    assert responses.kwargs["model"] == "gpt-6-astra"
+    assert chat.schemas[0][0] is Out
+    block = chat.seen[0][1].content[0]
+    assert block["type"] == "file"
+    assert block["file"]["detail"] == "high"
+    assert block["file"]["file_data"].startswith("data:application/pdf;base64,")
+    assert base64.b64decode(block["file"]["file_data"].split(",", 1)[1]) == b"%PDF-1"
 
 
-def test_refusal_and_incomplete_become_llm_error() -> None:
-    refusal = _message(SimpleNamespace(type="refusal"))
-    responses = _Responses(
-        SimpleNamespace(status="completed", output=[refusal], output_parsed=None)
-    )
+def test_real_chat_model_payload_is_responses_input_file() -> None:
+    chat = OpenAIClient("k")._chat
+    block = {"type": "file", "file": {"filename": "f.pdf", "file_data": "data:x", "detail": "high"}}
+    payload = chat._get_request_payload([HumanMessage(content=[block])])  # type: ignore[attr-defined]
+    part = payload["input"][0]["content"][0]
+    assert part == {
+        "type": "input_file",
+        "filename": "f.pdf",
+        "file_data": "data:x",
+        "detail": "high",
+    }
+    assert payload["reasoning"] == {"effort": "low"}
+    assert payload["store"] is False
+    assert payload["model"] == "gpt-6-astra"
+
+
+def test_refusal_incomplete_and_empty_become_llm_error() -> None:
+    refusal = make_chat(reply=AIMessage([{"type": "refusal", "refusal": "no"}]))  # type: ignore[arg-type]
     with pytest.raises(LLMError, match="recusou"):
-        _client(responses).extract_structured(instruction="i", schema=Out)
-    cut = _Responses(SimpleNamespace(status="incomplete", output=[], output_parsed=None))
+        _client(refusal).extract_structured(instruction="i", schema=Out)
+    cut = make_chat(reply=AIMessage("", response_metadata={"status": "incomplete"}))
     with pytest.raises(LLMError, match="cortada"):
         _client(cut).extract_structured(instruction="i", schema=Out)
-    empty = _Responses(SimpleNamespace(status="completed", output=[], output_parsed=None))
+    empty = make_chat(reply=AIMessage("", response_metadata={}))
     with pytest.raises(LLMError, match="formato"):
         _client(empty).extract_structured(instruction="i", schema=Out)
-
-
-def _status_error(cls: type[openai.APIStatusError], code: int) -> openai.APIStatusError:
-    request = httpx.Request("POST", "https://api.openai.com/v1/responses")
-    return cls("x", response=httpx.Response(code, request=request), body=None)
 
 
 @pytest.mark.parametrize(
     ("error", "fragment"),
     [
-        (_status_error(openai.RateLimitError, 429), "Limite de uso"),
-        (_status_error(openai.AuthenticationError, 401), "chave"),
-        (_status_error(openai.InternalServerError, 500), "código 500"),
-        (
-            openai.APIConnectionError(request=httpx.Request("POST", "https://api.openai.com")),
-            "Sem conexão",
-        ),
+        (status_error(openai.RateLimitError, 429, URL), "Limite de uso"),
+        (status_error(openai.AuthenticationError, 401, URL), "chave"),
+        (status_error(openai.InternalServerError, 500, URL), "código 500"),
+        (openai.APIConnectionError(request=httpx.Request("POST", URL)), "Sem conexão"),
     ],
 )
 def test_sdk_errors_are_translated(error: Exception, fragment: str) -> None:
     with pytest.raises(LLMError, match=fragment) as info:
-        _client(_Responses(error=error)).extract_structured(instruction="i", schema=Out)
+        _client(make_chat(error=error)).extract_structured(instruction="i", schema=Out)
     assert "sk-" not in str(info.value)
+    with pytest.raises(LLMError, match=fragment):
+        _client(make_chat(error=error)).search_urls(query="q", domains=["a.com"], max_results=1)
 
 
-def test_search_urls_uses_allowed_domains_and_dedupes() -> None:
-    def source(url: str) -> Any:
-        return SimpleNamespace(type="url", url=url)
+def test_search_urls_filters_domains_and_dedupes() -> None:
+    sources = [
+        {"type": "url", "url": "https://cifraclub.com.br/a"},
+        {"type": "url", "url": "https://evil.com/x"},
+    ]
+    blocks = [
+        {"type": "web_search_call", "action": {"type": "search", "sources": sources}},
+        {
+            "type": "text",
+            "text": "texto livre do modelo",
+            "annotations": [
+                {"type": "url_citation", "url": "https://cifraclub.com.br/a", "title": "A"},
+                {"type": "url_citation", "url": "https://www.cifraclub.com.br/b", "title": "B"},
+            ],
+        },
+    ]
+    chat = make_chat(reply=AIMessage(blocks))  # type: ignore[arg-type]
+    found = _client(chat).search_urls(query="q", domains=["cifraclub.com.br"], max_results=5)
+    assert [r.url for r in found] == [
+        "https://cifraclub.com.br/a",
+        "https://www.cifraclub.com.br/b",
+    ]
+    assert chat.tools[0] == {
+        "type": "web_search",
+        "filters": {"allowed_domains": ["cifraclub.com.br"]},
+    }
+    assert chat.tool_kwargs["include"] == ["web_search_call.action.sources"]
 
-    call = SimpleNamespace(
-        type="web_search_call",
-        action=SimpleNamespace(sources=[source("https://a"), source("https://a")]),
-    )
-    note = SimpleNamespace(type="url_citation", url="https://b", title="B")
-    output = [call, _message(SimpleNamespace(type="output_text", annotations=[note]))]
-    responses = _Responses(SimpleNamespace(output=output))
-    found = _client(responses).search_urls(query="q", domains=["letras.mus.br"], max_results=5)
-    assert [r.url for r in found] == ["https://a", "https://b"]
-    assert found[1].title == "B"
-    tool = responses.kwargs["tools"][0]
-    assert tool == {"type": "web_search", "filters": {"allowed_domains": ["letras.mus.br"]}}
-    assert len(_client(responses).search_urls(query="q", domains=[], max_results=1)) == 1
+
+def test_search_refusal() -> None:
+    chat = make_chat(reply=AIMessage([{"type": "refusal", "refusal": "no"}]))  # type: ignore[arg-type]
+    with pytest.raises(LLMError, match="recusou"):
+        _client(chat).search_urls(query="q", domains=[], max_results=1)
 
 
 def test_factory_chooses_provider() -> None:

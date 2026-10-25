@@ -333,7 +333,14 @@ class LLMClient(Protocol):
   documentação da OpenAI ao implementar) e `ClaudeClient`. `create_llm_client(settings)`
   escolhe pelo `Settings.llm_provider` (`openai` padrão | `anthropic`). Chave por
   provedor no `keyring` (ou `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` em desenvolvimento).
-- `ClaudeClient` implementa com o SDK `anthropic`:
+- Mapeamento atual (M6c): saída estruturada com `with_structured_output(schema,
+  include_raw=True)` (o `raw` detecta recusa/corte); PDF como bloco `file`
+  base64 (OpenAI: `input_file` com `detail=high`; Claude: `document`); busca web
+  via `bind_tools` (OpenAI `web_search` com `filters.allowed_domains`; Claude
+  `web_search_20260209` com `allowed_domains`), URLs só das fontes da busca,
+  filtradas pelos domínios permitidos. Os SDKs ficam só para traduzir exceções.
+  Construtores aceitam `chat_model` injetável (testes).
+- `ClaudeClient` (detalhes originais, hoje via `ChatAnthropic`):
   - modelo configurável, padrão `claude-opus-5-5`, com `output_config.effort`
     baixo/médio para extração;
   - `client.messages.parse(output_format=...)` para saída estruturada;

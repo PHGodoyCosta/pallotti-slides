@@ -1,4 +1,4 @@
-"""``LLMClient`` backed by the ``openai`` SDK (Responses API; ARQUITETURA §8).
+"""``LLMClient`` backed by LangChain ``ChatOpenAI`` (Responses API; ARQUITETURA §8).
 
 The model never writes lyrics or liturgical text: it extracts, returns URLs and
 classifies by id (CLAUDE.md, rule 1).
@@ -9,8 +9,20 @@ import logging
 from typing import Any
 
 import openai
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
-from pallotti_slides.llm.client import SearchResult, T
+from pallotti_slides.llm.client import (
+    DEFAULT_TEXT,
+    SEARCH_PROMPT,
+    SearchResult,
+    T,
+    collect_results,
+    content_blocks,
+    pick,
+)
 from pallotti_slides.llm.errors import LLMError
 
 DEFAULT_MODEL = "gpt-6-astra"
@@ -45,18 +57,28 @@ def _translate_error(error: Exception) -> LLMError:
 
 
 class OpenAIClient:
-    """``LLMClient`` using ``responses.parse`` and the ``web_search`` tool."""
+    """``LLMClient`` backed by LangChain's ``ChatOpenAI`` (Responses API)."""
 
     def __init__(
         self,
         api_key: str,
         model: str = DEFAULT_MODEL,
         effort: str = "low",
-        client: Any | None = None,
+        chat_model: BaseChatModel | None = None,
     ) -> None:
-        self._model = model
-        self._effort = effort
-        self._client: Any = client if client is not None else openai.OpenAI(api_key=api_key)
+        self._chat: BaseChatModel = (
+            chat_model
+            if chat_model is not None
+            else ChatOpenAI(
+                model=model,
+                api_key=SecretStr(api_key),
+                use_responses_api=True,
+                output_version="responses/v1",
+                reasoning_effort=effort,
+                max_completion_tokens=8192,
+                store=False,
+            )
+        )
 
     def extract_structured(
         self,
@@ -71,82 +93,61 @@ class OpenAIClient:
             data = base64.standard_b64encode(pdf).decode("ascii")
             content.append(
                 {
-                    "type": "input_file",
-                    "filename": "folheto.pdf",
-                    "file_data": f"data:application/pdf;base64,{data}",
-                    "detail": "high",  # scanned leaflets need full-quality rendering
+                    "type": "file",
+                    "file": {
+                        "filename": "folheto.pdf",
+                        "file_data": f"data:application/pdf;base64,{data}",
+                        "detail": "high",  # scanned leaflets need full-quality rendering
+                    },
                 }
             )
-        content.append(
-            {"type": "input_text", "text": text or "Extraia os dados conforme as instruções."}
-        )
+        content.append({"type": "text", "text": text or DEFAULT_TEXT})
+        messages = [SystemMessage(instruction), HumanMessage(content=content)]  # type: ignore[arg-type]
         try:
-            response = self._client.responses.parse(
-                model=self._model,
-                instructions=instruction,
-                input=[{"role": "user", "content": content}],
-                text_format=schema,
-                reasoning={"effort": self._effort},
-                max_output_tokens=8192,
-                store=False,
+            runnable = self._chat.with_structured_output(
+                schema, method="json_schema", include_raw=True
             )
-        except (openai.OpenAIError, openai.LengthFinishReasonError) as error:
+            out: dict[str, Any] = runnable.invoke(messages)  # type: ignore[assignment]
+        except Exception as error:
             _log.warning("Falha na chamada ao LLM: %s", type(error).__name__)
             raise _translate_error(error) from error
-        if getattr(response, "status", None) == "incomplete":
+        raw = out["raw"]
+        if (getattr(raw, "response_metadata", None) or {}).get("status") == "incomplete":
             raise LLMError("A resposta do modelo foi cortada antes de terminar. Tente de novo.")
-        parsed = response.output_parsed
-        if parsed is None:
-            if _has_refusal(response):
+        parsed = out["parsed"]
+        if not isinstance(parsed, schema):
+            if _has_refusal(raw):
                 raise LLMError("O modelo se recusou a processar este arquivo.")
             raise LLMError("O modelo não devolveu uma resposta no formato esperado.")
-        return parsed  # type: ignore[no-any-return]
+        return parsed
 
     def search_urls(
         self, *, query: str, domains: list[str], max_results: int
     ) -> list[SearchResult]:
         tool = {"type": "web_search", "filters": {"allowed_domains": domains}}
         try:
-            response = self._client.responses.create(
-                model=self._model,
-                input=f"Busque nos sites permitidos: {query}. Não escreva letras.",
-                tools=[tool],
-                include=["web_search_call.action.sources"],
-                reasoning={"effort": self._effort},
-                max_tool_calls=3,
-                max_output_tokens=4096,
-                store=False,
-            )
-        except openai.OpenAIError as error:
+            response = self._chat.bind_tools(
+                [tool], include=["web_search_call.action.sources"], max_tool_calls=3
+            ).invoke(SEARCH_PROMPT.format(query=query))
+        except Exception as error:
             _log.warning("Falha na busca web: %s", type(error).__name__)
             raise _translate_error(error) from error
         if _has_refusal(response):
             raise LLMError("O modelo se recusou a fazer esta busca.")
-        results: list[SearchResult] = []
-        seen: set[str] = set()
-
-        def add(url: str, title: str = "") -> None:
-            if url not in seen:
-                seen.add(url)
-                results.append(SearchResult(url=url, title=title))
-
-        for item in response.output:
-            kind = getattr(item, "type", None)
+        hits: list[tuple[str, str]] = []
+        for block in content_blocks(response):
+            kind = pick(block, "type")
             if kind == "web_search_call":
-                for source in getattr(getattr(item, "action", None), "sources", None) or []:
-                    add(source.url)
-            elif kind == "message":
-                for part in item.content:
-                    for note in getattr(part, "annotations", None) or []:
-                        if getattr(note, "type", None) == "url_citation":
-                            add(note.url, note.title or "")
-        return results[:max_results]
+                action = pick(block, "action")
+                hits.extend((pick(s, "url") or "", "") for s in pick(action, "sources") or [])
+            elif kind == "text":
+                hits.extend(
+                    (pick(n, "url") or "", pick(n, "title") or "")
+                    for n in pick(block, "annotations") or []
+                    if pick(n, "type") == "url_citation"
+                )
+        return collect_results(hits, domains, max_results)
 
 
-def _has_refusal(response: Any) -> bool:
-    for item in getattr(response, "output", None) or []:
-        if getattr(item, "type", None) == "message":
-            for part in item.content:
-                if getattr(part, "type", None) == "refusal":
-                    return True
-    return False
+def _has_refusal(message: Any) -> bool:
+    return any(pick(block, "type") == "refusal" for block in content_blocks(message))
