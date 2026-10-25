@@ -46,7 +46,7 @@ uv run pallotti template inspect         # após editar o modelo .pptx
    modelo e trocar etiquetas `{{...}}`. Nenhuma forma, imagem ou estilo criado
    por código.
 3. **Camadas** (ARQUITETURA §2): `domain/` é puro; só `ui/` importa
-   Qt/qfluentwidgets; só `llm/client.py` importa `anthropic`; só `db/`
+   Qt/qfluentwidgets; só `llm/` importa `anthropic` e `openai`; só `db/`
    importa `sqlalchemy`. `tests/unit/test_layers.py` verifica isso.
 4. **Testes padrão não acessam a rede.** LLM e HTTP entram por `Protocol` e são
    trocados por versões falsas. Rede só sob `@pytest.mark.live`.

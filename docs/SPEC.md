@@ -361,8 +361,9 @@ funcionalidade só está pronta quando todos os critérios passam.
 
 ### F14 — Configurações
 
-- Chave da API (guardada no cofre do sistema via `keyring`).
-- Modelo de LLM (padrão `claude-opus-5-5`).
+- Provedor de IA: **OpenAI** (padrão) ou **Anthropic**, com o modelo de cada um.
+- Chave da API de cada provedor, informada pelo usuário e guardada no cofre do
+  sistema via `keyring`.
 - Pasta de saída padrão.
 - Caminho do LibreOffice (detectado automaticamente; editável).
 - Caminho do modelo `.pptx` (padrão: o que vem com o programa).

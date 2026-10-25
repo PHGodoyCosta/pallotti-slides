@@ -23,7 +23,7 @@
 | Modelos de dados | **pydantic** v2 | Domínio, validação, JSON e esquema de saída do LLM |
 | Banco | **SQLAlchemy** 2.0 (ORM tipado) | SQLite hoje, outro banco amanhã |
 | Migrações | **Alembic** | Pasta `migrations/`; aplicadas na inicialização |
-| LLM | **anthropic** (SDK oficial, 1.x) | Extração do folheto, interpretação do texto livre, busca web de cantos, classificação de refrão |
+| LLM | **openai** (Responses API) e **anthropic** (SDKs oficiais); provedor escolhido pelo usuário, padrão OpenAI | Extração do folheto, interpretação do texto livre, busca web de cantos, classificação de refrão |
 | HTTP | **httpx** | Baixar páginas de letras |
 | HTML | **beautifulsoup4** (parser `lxml`) | Extrair letras do HTML |
 | Busca aproximada | **rapidfuzz** | Achar cantos por título, apelido ou primeira linha |
@@ -63,7 +63,7 @@ Regras (verificadas por teste de importação em `tests/unit/test_layers.py`):
 2. Nenhum módulo fora de `ui/` importa `PySide6` ou `qfluentwidgets`.
 3. `ui/` e `cli.py` só usam `application/` (e `domain/` para tipos). Não acessam
    `db/`, `llm/` ou `presentation/` diretamente.
-4. Só `llm/client.py` importa `anthropic`.
+4. Só `llm/` importa `anthropic` e `openai` (`llm/client.py` e `llm/openai_client.py`).
 5. Só `db/` importa `sqlalchemy`.
 6. Dependências externas (LLM, HTTP, conversor PDF, relógio) entram por
    **Protocol** no construtor, para que os testes usem versões falsas.
@@ -321,6 +321,12 @@ class LLMClient(Protocol):
     ) -> list[SearchResult]: ...
 ```
 
+- **Provedores:** `OpenAIClient` (`llm/openai_client.py`, SDK `openai`, Responses API:
+  `responses.parse` com saída estruturada, PDF como `input_file`, ferramenta
+  `web_search` com filtro de domínios; modelo padrão `gpt-6-astra`, a confirmar na
+  documentação da OpenAI ao implementar) e `ClaudeClient`. `create_llm_client(settings)`
+  escolhe pelo `Settings.llm_provider` (`openai` padrão | `anthropic`). Chave por
+  provedor no `keyring` (ou `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` em desenvolvimento).
 - `ClaudeClient` implementa com o SDK `anthropic`:
   - modelo configurável, padrão `claude-opus-5-5`, com `output_config.effort`
     baixo/médio para extração;
@@ -433,7 +439,8 @@ mass_songs
 
 - `Paths`: `data = user_data_dir("PallottiSlides")` (banco, cache),
   `config = user_config_dir(...)/config.json`, `logs = user_log_dir(...)`.
-- `Settings` (pydantic, salvo em JSON): modelo LLM, pasta de saída, caminho
+- `Settings` (pydantic, salvo em JSON): provedor de LLM (`openai` | `anthropic`) e
+  modelo de cada provedor (as chaves ficam no `keyring`, nunca no JSON), pasta de saída, caminho
   do soffice, caminho do modelo pptx, `TypographyConfig(min_font=40,
   max_font=54, max_lines=6)`, tema.
 - **Fontes** (`FontLocator` em `config.py`): a Aptos é da Microsoft e sua

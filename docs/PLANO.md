@@ -66,6 +66,8 @@ Onda 4:                M11
 | M1 | Domínio e fixture de referência | 0 | M0 | revisar modelos | ☐ |
 | M2 | Modelo PPTX etiquetado | 1 | M1 | aprovar visual | ☐ |
 | M3 | Motor de apresentação | 1 | M2 | aprovar PDF gerado | ☐ |
+| M3b | Biblioteca de slides em pptx (OEs e cantos) | 2 | M3, M4 | aprovar PDF gerado | ☐ |
+| M6b | Provedor OpenAI e escolha de provedor | 1 | M6 | — | ☐ |
 | M4 | Banco de dados | 1 | M1 | — | ☐ |
 | M5 | Letras: baixar e analisar | 1 | M1 | — | ☐ |
 | M6 | Extração do folheto | 1 | M1, P1 | conferir extração | ☐ |
@@ -188,6 +190,46 @@ uv run pallotti generate --mass tests/fixtures/masses/full_9_songs.json --output
   nenhum texto fora da caixa, nenhuma etiqueta sobrando, ordem correta.
 
 🧑 Você abre o pptx e o PDF gerados e aprova.
+
+---
+
+### M3b — Biblioteca de slides em pptx (OEs e cantos)
+
+**Objetivo:** montar a missa juntando slides de arquivos pptx próprios, em vez
+de tudo sair de um único modelo (decisão do Pedro, 2026-10-24).
+
+**Tarefas**
+- `resources/eucharistic_prayers/<id>.pptx`: um arquivo por OE, com os slides
+  do bloco (o da OE III sai do modelo atual). O modelo principal guarda só o
+  lugar do bloco. `EucharisticPrayer` passa a cobrir todas as OEs da D7.
+- Cache de cantos: um pptx por canto em `Paths.data/songs/`, gerado a partir do
+  protótipo e da paginação (M3) e **regenerado automaticamente** quando a letra
+  ou a tipografia mudam (chave = hash da estrutura + `TypographyConfig`). Ao
+  usar o canto em outro momento, só o rótulo (`{{canto.rotulo}}`) é trocado.
+- `slides_xml.py`: importar slides de outro pptx (parte, relações, mídia,
+  layout equivalente), sem criar formas novas (regra 2).
+- O teste de referência do M3 continua passando.
+
+**Critérios de parada**
+```bash
+uv run pytest tests/unit/presentation tests/integration/test_example.py -q
+uv run pytest -m soffice -q
+```
+🧑 Você abre o pptx e o PDF gerados e aprova.
+
+---
+
+### M6b — Provedor OpenAI e escolha de provedor
+
+**Objetivo:** D6. `OpenAIClient` com a mesma interface `LLMClient`,
+`create_llm_client(settings)`, chaves por provedor no `keyring` e provedor
+padrão OpenAI. Testes offline com fakes; testes `live` com `OPENAI_API_KEY`.
+
+**Critérios de parada**
+```bash
+uv run pytest tests/unit/llm tests/unit/leaflet -q
+uv run pytest -m live tests/integration/test_leaflet_live.py   # com OPENAI_API_KEY
+```
 
 ---
 
@@ -374,8 +416,8 @@ segue o padrão.
 | D4 | Sistema operacional das máquinas da paróquia. | Windows + LibreOffice; PowerPoint opcional para o PDF |
 | D5 | Fonte Aptos: a licença da Microsoft (gravada no próprio arquivo TTF) **proíbe redistribuir**, então ela não pode ir no executável nem no GitHub. | Usar a Aptos instalada na máquina (Office/Windows ou download gratuito da Microsoft); `src/assets/fonts/` só para desenvolvimento local, ignorada pelo git; diagnóstico orienta a instalação |
 | D12 | Alternativa à D5: trocar a fonte do modelo por uma livre (OFL), que **pode** ir no executável, como Inter, Source Sans 3 ou Noto Sans. | Manter a Aptos (preserva o visual atual). Reavaliar no M11 se a instalação na paróquia der trabalho |
-| D6 | Provedor e modelo de LLM. | Anthropic, `claude-opus-5-5`, configurável |
-| D7 | Quais OEs a paróquia usa de fato. | MVP: III; M10: I, II e IV |
+| D6 | Provedor e modelo de LLM. | **Decidido (2026-10-24):** OpenAI e Anthropic; o usuário escolhe nas Configurações e informa a própria chave. Padrão: OpenAI (modelo a confirmar na documentação). |
+| D7 | Quais OEs a paróquia usa de fato. | **Decidido (2026-10-24):** todas do Missal 3ª ed. (I–V, Reconciliação I–II, Diversas Circunstâncias I–IV, Crianças I–III), lista confirmada no M10; texto sempre de fonte do Pedro (P5). |
 | D8 | Aclamação do mistério da fé: fixa ou varia? | **Decidido (2026-10-24):** varia conforme o rito e a OE; vem do folheto (texto extraído, não enum) ou é digitada. Sem texto padrão. |
 | D9 | Advento/Quaresma: sem Glória. Muda mais alguma coisa (cor, imagem, aclamação)? | **Parcial (2026-10-24):** Quaresma sem Glória; há outros tempos sem Glória ou sem certos cantos, a definir no M1 com perguntas específicas. Cor: ignorar por ora. O título de cada domingo vem escrito no folheto. |
 | D10 | Marcadores "(2x)" e "bis" nas letras: manter ou expandir? | Manter como escrito |

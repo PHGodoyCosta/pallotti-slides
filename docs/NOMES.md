@@ -78,6 +78,7 @@
 | `DadosFolheto(…, observacoes)`, `ExtratorFolheto.extrair()` | `LeafletData(…, notes)`, `LeafletExtractor.extract()` |
 | `ClienteLLM` (`extrair_estruturado(instrucao, esquema, pdf, texto)`, `buscar_urls(consulta, dominios, maximo)`), `ResultadoBusca` | `LLMClient` (`extract_structured(instruction, schema, pdf, text)`, `search_urls(query, domains, max_results)`), `SearchResult` |
 | `ClienteClaude`, `ClienteLLMFalso` | `ClaudeClient`, `FakeLLMClient` |
+| cliente OpenAI; fábrica de cliente; provedor | `OpenAIClient` (`llm/openai_client.py`), `create_llm_client()`, `Settings.llm_provider` (`openai` \| `anthropic`) |
 
 ## Banco
 
