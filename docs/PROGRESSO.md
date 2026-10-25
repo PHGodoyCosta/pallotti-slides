@@ -6,7 +6,7 @@
 | Marco | Estado | Commit | Última atualização | Observação |
 |---|---|---|---|---|
 | M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
-| M1 | 🧑 aguardando | (ver git log) | 2026-10-24 | revisar modelos e fixture 26tc_2026.json |
+| M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
 | M2 | ☐ | — | — | perguntas antes: fim da missa, aclamação, Santo/Cordeiro, salmo/cântico |
 | M3 | ☐ | — | — | — |
 | M4 | ☐ | — | — | — |
@@ -31,6 +31,7 @@
 - 2026-10-24 — M1: nome do arquivo usa título curto = regra ("Domingo"→"Dom", "do Tempo Comum"→"do T.C", resto igual) + campo `short_title` editável (Pedro, TUI)
 - 2026-10-24 — M1: data padrão da missa nova = próximo domingo (Pedro, TUI)
 - 2026-10-24 — M1: título normalizado para "30° Domingo do Tempo Comum" (iniciais maiúsculas, preposições minúsculas, símbolo °) (Pedro, TUI)
+- 2026-10-24 — M1 aprovado (Pedro, TUI). Títulos dos cantos da fixture e rótulos Comunhão/Pós-Comunhão/Saída ainda a confirmar
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
