@@ -4,16 +4,18 @@ from typing import cast
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon, FluentWindow, InfoBar, NavigationItemPosition
+from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
 
 from pallotti_slides.application.container import Container
 from pallotti_slides.application.mass_history import MassHistory
+from pallotti_slides.application.new_mass import NewMassService
 from pallotti_slides.application.settings_service import SettingsService
 from pallotti_slides.domain.models import Mass
 from pallotti_slides.ui.assets import image_path
 from pallotti_slides.ui.pages.about import AboutPage
 from pallotti_slides.ui.pages.history import HistoryPage
 from pallotti_slides.ui.pages.home import HomePage
+from pallotti_slides.ui.pages.new_mass import NewMassPage
 from pallotti_slides.ui.pages.placeholder import PlaceholderPage
 from pallotti_slides.ui.pages.settings import SettingsPage
 
@@ -35,7 +37,7 @@ class MainWindow(FluentWindow):  # type: ignore[misc]
         self.setMinimumSize(820, 560)
 
         self.home_page = HomePage()
-        self.new_mass_page = PlaceholderPage("Nova Missa", "new-mass-page")
+        self.new_mass_page = NewMassPage(NewMassService(container))
         self.library_page = PlaceholderPage("Biblioteca", "library-page")
         self.history_page = HistoryPage(MassHistory(container.mass_repo))
         self.settings_page = SettingsPage(
@@ -59,14 +61,8 @@ class MainWindow(FluentWindow):  # type: ignore[misc]
         self.history_page.mass_requested.connect(self._load_mass)
 
     def _load_mass(self, mass: Mass, duplicate: bool) -> None:
-        """Hand a Mass from the history to the Nova Missa page (when it can receive one)."""
-        loader = getattr(self.new_mass_page, "load_mass", None)
-        if loader is None:
-            InfoBar.warning(
-                "Histórico", "A tela Nova Missa ainda não pode abrir missas.", parent=self
-            )
-            return
-        loader(mass, duplicate)
+        """Hand a Mass from the history to the Nova Missa page."""
+        self.new_mass_page.load_mass(mass, duplicate)
         self.show_page(self.new_mass_page)
 
     def show_page(self, page: QWidget) -> None:
