@@ -307,6 +307,9 @@ ajustar o prompt.
 **Tarefas**
 - `interpreter.py`, `web_search.py`, `resolver.py`.
 - `pallotti songs resolve "<texto>"` e `pallotti songs import --url`.
+- Importação de repertório por link (Cifra Club): lista os cantos, propõe o
+  momento de cada um e devolve uma **proposta para confirmação** (nunca aplica
+  sozinha). CLI: `pallotti songs repertoire <url>` imprime a proposta.
 
 **Critérios de parada**
 ```bash
@@ -343,6 +346,9 @@ Teste de ponta a ponta com fakes: folheto (LLM falso) + pedidos de canto
 **Objetivo:** F1, F3, F7, F12, F13 e F14 em PySide6 + qfluentwidgets
 (ARQUITETURA §11). Pode ser dividido entre agentes por página **depois** que
 `main_window.py` e `tasks.py` existirem.
+
+**Inclui:** painel de acompanhamento (chat) e telas de confirmação
+(ARQUITETURA §11), com a confirmação do repertório (SPEC F4).
 
 **Sub-marcos:** M9a janela, navegação, tema, Início e Sobre · M9b Nova Missa
 (4 etapas) · M9c Biblioteca · M9d Histórico e Configurações (com diagnóstico).

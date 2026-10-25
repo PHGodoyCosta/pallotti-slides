@@ -431,6 +431,12 @@ mass_songs
 - Operações longas (LLM, rede, LibreOffice) rodam em `QThreadPool` via
   `Task(QRunnable)`, com sinais `finished`, `failed` e `progress`. A
   interface nunca bloqueia; durante a operação aparece um `StateToolTip`.
+- **Painel de acompanhamento (chat):** enquanto o programa processa (folheto,
+  link de repertório, busca de cantos), um painel em forma de chat mostra o
+  que está sendo feito, passo a passo, e as perguntas ao usuário.
+- **Telas de confirmação:** toda decisão automática (momento de cada canto de
+  um repertório, candidato escolhido na busca, campos extraídos do folheto)
+  é mostrada para o usuário confirmar ou corrigir antes de seguir.
 - Tema: claro/escuro/sistema (`setTheme`), cor de destaque litúrgica
   configurável (padrão vinho `#7A1F2B`). Imagens de Pallotti no Início e no
   Sobre.

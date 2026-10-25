@@ -160,6 +160,13 @@ funcionalidade só está pronta quando todos os critérios passam.
   sendo a fonte da verdade.
 - Momento sem canto = grupo removido da apresentação. Os cantos sugeridos no
   folheto são ignorados (ver F2).
+- **Repertório por link** (ex.: repertório/playlist do Cifra Club): o programa
+  lê a lista e **propõe** o momento de cada canto, mas **sempre pede
+  confirmação** numa tela "Estes são os cantos que encontrei: Entrada = …,
+  Ato penitencial = …. Estão corretos?". A ordem do link pode estar errada,
+  pode haver cantos a mais ou que não fazem parte do repertório: o usuário
+  troca o momento, ignora cantos e completa os que faltam antes de seguir.
+  Vale para qualquer atribuição automática de momento (texto livre, link).
 
 **Aceite**
 - [ ] A detecção de tipo acerta nos casos de teste (URL, título, letra com
@@ -210,7 +217,13 @@ funcionalidade só está pronta quando todos os critérios passam.
   4. o usuário pode corrigir na revisão.
 - Linhas como "Refrão" ou "(Refrão)" no meio da letra viram referência à estrofe
   de refrão na ordem de execução.
-- Acordes (Cifra Club) são removidos.
+- Acordes (Cifra Club) são removidos, assim como rótulos de seção ("[Intro]",
+  "[Primeira Parte]", "Parte 1 de 2") e prolongamentos de sílaba
+  ("liberta..dos" → "libertados").
+- **Repetição dentro do refrão:** quando um bloco de linhas se repete em
+  sequência dentro da mesma estrofe (ex.: "Senhor piedade…" duas vezes), ele
+  aparece **uma vez**, marcado como repetível: a primeira linha começa com
+  `/*` e a última termina com `*/` (decisão do Pedro, 2026-10-25).
 - Linhas de refrão saem em **negrito**. Linhas de verso podem ser marcadas como
   destaque individualmente (ex.: "Glória, glória, glória, glória" no Glória).
 
