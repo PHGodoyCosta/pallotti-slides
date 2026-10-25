@@ -9,13 +9,14 @@
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
 | M2 | ✅ | 156e50e | 2026-10-24 | aprovado pelo Pedro (M2-a..d ok) |
 | M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado; ajustes aplicados (M3-fix) |
-| M3b | ☐ | — | 2026-10-24 | depois do M3; cache automático de cantos |
+| M3b | ▶️ | — | 2026-10-24 | depois do M3; cache automático de cantos |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ▶️ M5b | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M6b | ✅ | (ver log) | 2026-10-24 | gpt-6-astra padrão; live pula sem OPENAI_API_KEY |
+| M6c | ▶️ | — | 2026-10-25 | migrar llm/ para LangChain |
 | M7 | ☐ | — | — | — |
-| M8 | ✅ | (este commit) | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
+| M8 | ✅ | 42ed840 | 2026-10-25 | 18 testes CLI/fluxo; resolução por título/URL e texto livre ficam no M7 |
 | M9 | ☐ | — | — | — |
 | M10 | ☐ | — | — | aguarda P5 |
 | M11 | ☐ | — | — | — |
@@ -44,6 +45,7 @@
 - 2026-10-24 — M3b: biblioteca de pptx (uma OE por arquivo; cache automático por canto, regenerado se letra/tipografia mudar); M3 termina como está (Pedro, TUI)
 - 2026-10-24 — D6: provedor padrão OpenAI; D7: todas as OEs do Missal 3ª ed., lista confirmada no M10 (Pedro, TUI)
 - 2026-10-24 — M3 aprovado com ajustes: rótulo "Canto de Saída"; refrão curto com fonte maior; texto nunca vaza, centralizado e grande; caixas do corpo alargadas (M3-b) e estendidas até perto do pé do slide, voltando à regra "a caixa define a área" (M3-a) (Pedro, TUI)
+- 2026-10-25 — LLM via LangChain (langchain-openai/anthropic), mantendo o Protocol LLMClient (Pedro, TUI)
 - 2026-10-25 — Repertório por link: sempre propor momentos e pedir confirmação; chat de acompanhamento e telas de confirmação na interface (Pedro, TUI)
 - 2026-10-25 — Refrão com bloco repetido aparece uma vez entre `/*` e `*/` (Pedro, TUI)
 - 2026-10-25 — Missa de 25/10 gerada (OE DC IV) em ~/Documentos/Missa-25-10-2026 a partir do folheto e da playlist do Cifra Club; respostas da OE DC IV fornecidas pelo Pedro

@@ -23,7 +23,7 @@
 | Modelos de dados | **pydantic** v2 | Domínio, validação, JSON e esquema de saída do LLM |
 | Banco | **SQLAlchemy** 2.0 (ORM tipado) | SQLite hoje, outro banco amanhã |
 | Migrações | **Alembic** | Pasta `migrations/`; aplicadas na inicialização |
-| LLM | **openai** (Responses API) e **anthropic** (SDKs oficiais); provedor escolhido pelo usuário, padrão OpenAI | Extração do folheto, interpretação do texto livre, busca web de cantos, classificação de refrão |
+| LLM | **LangChain** (`langchain-openai`, `langchain-anthropic`) sobre os SDKs oficiais; provedor escolhido pelo usuário, padrão OpenAI | Extração do folheto, interpretação do texto livre, busca web de cantos, classificação de refrão |
 | HTTP | **httpx** | Baixar páginas de letras |
 | HTML | **beautifulsoup4** (parser `lxml`) | Extrair letras do HTML |
 | Busca aproximada | **rapidfuzz** | Achar cantos por título, apelido ou primeira linha |
@@ -63,7 +63,8 @@ Regras (verificadas por teste de importação em `tests/unit/test_layers.py`):
 2. Nenhum módulo fora de `ui/` importa `PySide6` ou `qfluentwidgets`.
 3. `ui/` e `cli.py` só usam `application/` (e `domain/` para tipos). Não acessam
    `db/`, `llm/` ou `presentation/` diretamente.
-4. Só `llm/` importa `anthropic` e `openai` (`llm/client.py` e `llm/openai_client.py`).
+4. Só `llm/` importa LangChain (`langchain_*`), `anthropic` e `openai`. O resto do
+   programa só conhece o Protocol `LLMClient`.
 5. Só `db/` importa `sqlalchemy`.
 6. Dependências externas (LLM, HTTP, conversor PDF, relógio) entram por
    **Protocol** no construtor, para que os testes usem versões falsas.
@@ -321,6 +322,11 @@ class LLMClient(Protocol):
     ) -> list[SearchResult]: ...
 ```
 
+- **LangChain (decisão do Pedro, 2026-10-25):** os clientes usam `ChatOpenAI`
+  (Responses API) e `ChatAnthropic`, com `with_structured_output(<pydantic>)` para
+  saída estruturada, blocos de conteúdo para o PDF e as ferramentas de busca
+  web de cada provedor via `bind_tools`, restritas aos domínios permitidos. A
+  interface `LLMClient` não muda.
 - **Provedores:** `OpenAIClient` (`llm/openai_client.py`, SDK `openai`, Responses API:
   `responses.parse` com saída estruturada, PDF como `input_file`, ferramenta
   `web_search` com filtro de domínios; modelo padrão `gpt-6-astra`, a confirmar na
