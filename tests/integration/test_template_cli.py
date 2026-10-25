@@ -54,7 +54,7 @@ def test_help_of_template_commands() -> None:
 def test_tools_report_matches_template() -> None:
     report = TemplateTools().inspect()
     assert len(report.rows) == len(MassTemplate.load().slides)
-    assert report.prayers == ["III"]
+    assert report.prayers == ["III", "DC IV"]
     assert not report.has_errors
 
 

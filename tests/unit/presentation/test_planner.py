@@ -32,8 +32,11 @@ def test_reference_mass_keeps_all_but_the_absent_songs(
     plan = BuildPlanner().plan(template, mass_26tc, one_page_per_stanza(mass_26tc))
     absent = {SongMoment.COMMUNION, SongMoment.POST_COMMUNION, SongMoment.RECESSIONAL}
     removed = [s for s in template.slides if s.index not in set(plan.sources)]
-    assert {s.tag.moment for s in removed} == absent
-    assert len(removed) == 6  # separator + prototype of each absent moment
+    songs_removed = [s for s in removed if s.tag.prayer is None]
+    assert {s.tag.moment for s in songs_removed} == absent
+    assert len(songs_removed) == 6  # separator + prototype of each absent moment
+    # the other prayer block (DC IV: 9 images + 9 responses) is removed too
+    assert len(removed) - len(songs_removed) == 18
     assert len(plan) == 69
 
 

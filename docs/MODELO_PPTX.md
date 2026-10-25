@@ -17,7 +17,7 @@ A **primeira linha das anotações** de cada slide define o papel dele:
 | `@pallotti fixo` | Sempre presente. (Slide sem etiqueta = fixo, mas o inspetor avisa.) |
 | `@pallotti grupo=<id>` | Entra ou sai junto com o grupo `<id>`. |
 | `@pallotti canto=<momento>` | **Protótipo** do canto daquele momento: duplicado uma vez por página do canto. Pertence ao grupo `canto:<momento>`. |
-| `@pallotti oe=<id>` | Faz parte do bloco da Oração Eucarística `<id>` (I, II, III, IV…). Só o bloco escolhido fica. |
+| `@pallotti oe=<id>` | Faz parte do bloco da Oração Eucarística `<id>` (I, II, III, IV…). Só o bloco escolhido fica. Etiquetas não aceitam espaço: `oe=DC_IV` corresponde ao valor `DC IV` do enum (`VARIOUS_NEEDS_IV`; aparece no nome do arquivo). |
 
 Grupos reconhecidos:
 
@@ -124,7 +124,7 @@ Baseado em `examples/Missa - 26° Dom do T.C - 26.09.2026 - OE III.pptx`
 **Provisório no M2 (2026-10-24), a confirmar no portão:** bloco OE III =
 slides 47–60 do exemplo; fim = 66 Cordeiro, 67 "Senhor, eu não sou digno",
 68 hóstia (fixo), depois separador (Jesus) + comunhão, separador + pós-comunhão,
-separador + saída, 69 final. O modelo gerado tem 62 slides.
+separador + saída, 69 final. O modelo gerado tem 80 slides (com o bloco OE DC IV).
 
 **A confirmar com o usuário** (marco M2, com perguntas específicas): os limites
 exatos do bloco da OE (47–60), a posição dos novos cantos de comunhão,
@@ -150,6 +150,7 @@ Derivado dos slides de canto do exemplo:
 | OE I | pendente | Missal Romano 3ª ed. / folheto | — |
 | OE II | pendente | Missal Romano 3ª ed. / folheto | — |
 | OE IV | pendente | Missal Romano 3ª ed. / folheto | — |
+| OE Diversas Circunstâncias IV | pronto | respostas fornecidas pelo Pedro | Pedro, 2026-10-24 |
 
 Um bloco só entra na lista de OEs do programa depois de aprovado aqui. O agente
 pode **montar o rascunho** de um bloco (respostas da assembleia a partir de

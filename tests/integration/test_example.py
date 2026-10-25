@@ -14,6 +14,7 @@ from pallotti_slides.application.generate_mass import (
     make_mass_generator,
 )
 from pallotti_slides.config import FontLocator
+from pallotti_slides.domain.enums import EucharisticPrayer
 from pallotti_slides.presentation.preview import pdf_page_count
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,3 +95,29 @@ def test_real_pdf_has_one_page_per_slide(tmp_path: Path) -> None:
     assert result.pdf.parent == tmp_path
     slides = len(Presentation(str(result.pptx)).slides)
     assert pdf_page_count(result.pdf) == slides == 69
+
+
+def test_various_needs_iv_responses_in_order(tmp_path: Path) -> None:
+    mass = load_mass(FIXTURE)
+    liturgy = mass.liturgy.model_copy(
+        update={"eucharistic_prayer": EucharisticPrayer.VARIOUS_NEEDS_IV}
+    )
+    mass = mass.model_copy(update={"liturgy": liturgy})
+    result = make_mass_generator(with_pdf=False).generate(mass, tmp_path)
+    assert result.pptx.name.endswith("OE DC IV.pptx")
+    texts = [slide_texts(s) for s in Presentation(str(result.pptx)).slides]
+    start = next(
+        i for i, t in enumerate(texts) if t == ["R: Bendito o vosso Filho, presente entre nós!"]
+    )
+    responses = [t[0] for t in texts[start : start + 18] if t]
+    assert responses == [
+        "R: Bendito o vosso Filho, presente entre nós!",
+        "R: Enviai o vosso Espírito Santo!",
+        mass.liturgy.mystery_of_faith,
+        "R: Aceitai, ó Senhor, a nossa oferta!",
+        "R: O Espírito nos una num só corpo!",
+        "R: Confirmai na unidade a vossa Igreja!",
+        "R: Ajudai-nos a criar um mundo novo!",
+        "R: Concedei-lhes, ó Senhor, a luz eterna!",
+        "R: Amém!",
+    ]

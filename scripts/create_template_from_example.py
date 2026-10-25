@@ -18,9 +18,11 @@ Usage: uv run python scripts/create_template_from_example.py
 """
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from pptx import Presentation
+from pptx.presentation import Presentation as PresentationType
 from pptx.shapes.autoshape import Shape
 from pptx.slide import Slide
 from pptx.util import Emu
@@ -73,6 +75,24 @@ SECOND_READING_SLIDES = (24, 25)
 # --- Eucharistic prayer block (PROVISIONAL) --------------------------------------------------
 PRAYER_ID = "III"
 PRAYER_SLIDES = range(47, 61)  # 47..60
+# Block "Diversas Circunstâncias IV" (tag ``oe=DC_IV``, enum value "DC IV"), placed right after the
+# OE III block. Built only by duplicating slides of the OE III block. Each entry is
+# (source slide, new text of the black run or None to keep it); every response is preceded by a
+# copy of the host image (slide 47). Texts supplied by Pedro (2026-10-24).
+PRAYER_DC_IV_TAG = "DC_IV"
+PRAYER_DC_IV_IMAGE = 47
+PRAYER_DC_IV_AFTER = 60
+PRAYER_DC_IV_SLIDES: tuple[tuple[int, str | None], ...] = (
+    (48, "Bendito o vosso Filho, presente entre nós!"),
+    (48, None),  # Enviai o vosso Espírito Santo!
+    (50, None),  # {{liturgia.misterio_fe}}
+    (52, "Aceitai, ó Senhor, a nossa oferta!"),
+    (54, "O Espírito nos una num só corpo!"),
+    (54, "Confirmai na unidade a vossa Igreja!"),
+    (54, "Ajudai-nos a criar um mundo novo!"),
+    (54, "Concedei-lhes, ó Senhor, a luz eterna!"),
+    (60, None),  # Amém!
+)
 
 # --- End of the Mass (PROVISIONAL) -----------------------------------------------------------
 # Before the final slide 69 come, in this order, a separator + prototype for each moment below.
@@ -152,6 +172,29 @@ def make_song_prototype(
     body.height = Emu(slide_height - BODY_BOTTOM_MARGIN_EMU - int(body.top or 0))
 
 
+def dc_iv_block(
+    presentation: PresentationType, slide_of: Callable[[int], Slide]
+) -> list[tuple[Slide, str]]:
+    """Slides of the DC IV block: image + response, copied from the OE III block."""
+    tag = f"oe={PRAYER_DC_IV_TAG}"
+    block: list[tuple[Slide, str]] = []
+    for source, text in PRAYER_DC_IV_SLIDES:
+        block.append((duplicate_slide(presentation, slide_of(PRAYER_DC_IV_IMAGE)), tag))
+        response = duplicate_slide(presentation, slide_of(source))
+        if text is not None:
+            runs = [
+                r
+                for shape in text_shapes(response)
+                for p in shape.text_frame.paragraphs
+                for r in p.runs
+            ]
+            if len(runs) < 3 or runs[0].text != "R:":
+                fail(f"slide {source}: esperava run vermelho 'R:' seguido do texto da resposta")
+            runs[2].text = text  # the black run; the red "R:" run stays untouched
+        block.append((response, tag))
+    return block
+
+
 def set_tag(slide: Slide, tag: str) -> None:
     slide.notes_slide.notes_text_frame.text = f"{TAG_PREFIX} {tag}"
 
@@ -203,6 +246,8 @@ def main() -> None:
                 ordered.append((separator, f"grupo={group}"))
                 ordered.append((prototype, f"canto={MOMENT_TAGS[moment]}"))
         ordered.append((slide_of(number), tags[number]))
+        if number == PRAYER_DC_IV_AFTER:
+            ordered.extend(dc_iv_block(presentation, slide_of))
 
     # 4. Keep/reorder/rename, then write the tags in the notes.
     keep_slides(presentation, [slide for slide, _ in ordered])

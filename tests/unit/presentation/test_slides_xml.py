@@ -21,7 +21,7 @@ def test_duplicate_slide_copies_content_and_shares_the_image() -> None:
     source = presentation.slides[3]  # separator image
     copy = duplicate_slide(presentation, source)
 
-    assert len(presentation.slides) == 63
+    assert len(presentation.slides) == 81
     assert presentation.slides[-1].slide_id == copy.slide_id
     assert copy.slide_layout.name == source.slide_layout.name
     source_pics = [s for s in source.shapes if s.shape_type == 13]

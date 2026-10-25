@@ -113,10 +113,19 @@ def test_second_reading_group_holds_the_reading_slides(template: MassTemplate) -
 
 
 def test_prayer_block_is_contiguous_and_has_mystery_of_faith(template: MassTemplate) -> None:
-    assert template.available_prayers() == [EucharisticPrayer.III]
+    assert template.available_prayers() == [
+        EucharisticPrayer.III,
+        EucharisticPrayer.VARIOUS_NEEDS_IV,
+    ]
     block = [s.index for s in template.slides if s.tag.prayer is EucharisticPrayer.III]
     assert block == list(range(block[0], block[-1] + 1))
     assert any("liturgy.mystery_of_faith" in template.slides[i].fields for i in block)
+    block_dc = [
+        s.index for s in template.slides if s.tag.prayer is EucharisticPrayer.VARIOUS_NEEDS_IV
+    ]
+    assert len(block_dc) == 18  # 9 images + 9 responses
+    assert block_dc == list(range(block_dc[0], block_dc[-1] + 1))
+    assert any("liturgy.mystery_of_faith" in template.slides[i].fields for i in block_dc)
 
 
 def test_all_text_fields_are_in_the_template(template: MassTemplate) -> None:

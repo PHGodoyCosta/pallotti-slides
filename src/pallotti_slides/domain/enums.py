@@ -52,6 +52,14 @@ class EucharisticPrayer(StrEnum):
     II = "II"
     III = "III"
     IV = "IV"
+    VARIOUS_NEEDS_IV = "DC IV"
+
+    @property
+    def label(self) -> str:
+        """Display text in Portuguese."""
+        if self is EucharisticPrayer.VARIOUS_NEEDS_IV:
+            return "Diversas Circunstâncias IV"
+        return self.value
 
 
 class StanzaType(StrEnum):

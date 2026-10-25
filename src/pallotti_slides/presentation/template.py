@@ -64,7 +64,8 @@ MYSTERY_FIELD = "liturgy.mystery_of_faith"
 
 Level = Literal["info", "warning", "error"]
 _TEXT_TAG = re.compile(r"\{\{(.*?)\}\}")
-_PRAYER_BY_ID = {prayer.value: prayer for prayer in EucharisticPrayer}
+# Tags cannot contain spaces, so the tag id is the enum value with "_" ("DC IV" -> "DC_IV").
+_PRAYER_BY_ID = {prayer.value.replace(" ", "_"): prayer for prayer in EucharisticPrayer}
 _A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
 DEFAULT_SLIDE_SIZE = (12192000, 6858000)  # 16:9, EMU
 # Insets of a:bodyPr when the attribute is absent (OOXML defaults), in EMU.
