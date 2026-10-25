@@ -17,6 +17,7 @@ from platformdirs import user_config_dir, user_data_dir, user_log_dir
 APP_NAME = "PallottiSlides"
 FONT_FAMILY = "Aptos"
 FONTS_DIR_VAR = "PALLOTTI_FONTS_DIR"
+DB_URL_VAR = "PALLOTTI_DB_URL"
 
 _REGULAR_NAMES = ("Aptos.ttf", "Aptos-Regular.ttf")
 _BOLD_NAMES = ("Aptos-Bold.ttf", "Aptos Bold.ttf")
@@ -37,6 +38,15 @@ class Paths:
             config=Path(user_config_dir(APP_NAME)) / "config.json",
             logs=Path(user_log_dir(APP_NAME)),
         )
+
+
+def default_db_url(paths: Paths | None = None, env: Mapping[str, str] | None = None) -> str:
+    """Database URL: ``PALLOTTI_DB_URL`` or SQLite in ``Paths.data/pallotti.db``."""
+    from_env = (os.environ if env is None else env).get(DB_URL_VAR)
+    if from_env:
+        return from_env
+    data = (paths or Paths.default()).data
+    return f"sqlite:///{(data / 'pallotti.db').as_posix()}"
 
 
 @dataclass(frozen=True)

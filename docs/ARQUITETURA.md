@@ -378,7 +378,7 @@ mass_songs
   PK (mass_id, moment)
 ```
 
-- **Busca** (`SongRepository.search(term, limit=5) -> list[Match(song, score)]`):
+- **Busca** (`SongRepository.search(term, limit=5) -> list[Match(song_id, song, score)]`):
   normaliza o termo; correspondência exata em `title_search`, `alias_search` ou
   prefixo de `first_line_search` = 100. Senão, `rapidfuzz.process.extract`
   com `token_set_ratio` sobre títulos, apelidos e primeiras linhas carregados em
@@ -391,7 +391,10 @@ mass_songs
   `uv run alembic check` precisa passar. Revisão inicial: `0001_initial_schema`.
 - **URL do banco**: padrão `sqlite:///{user_data_dir}/pallotti.db`, que pode ser
   trocada por `PALLOTTI_DB_URL` (ex.: Postgres no futuro).
-- `MassRepository`: `save(mass, files) -> int`, `list(limit)`,
+- `SongRepository.by_url(url) -> tuple[int, Song] | None`; `add_alias(song_id, alias)`
+  (normaliza; `DuplicateError` se já existir). `Song` não tem id: os ids vêm
+  junto (`Match.song_id`, tuplas).
+- `MassRepository`: `save(mass, files: MassFiles | None) -> int`, `list(limit) -> list[MassSummary]`,
   `get(id) -> Mass`.
 
 ## 10. Casos de uso (`application/`)

@@ -88,7 +88,8 @@
 | `cantos_apelidos`: canto_id, apelido_busca | `song_aliases`: song_id, alias_search |
 | `missas`: data, titulo, tempo, oracao_eucaristica, dados, arquivo_pptx, arquivo_pdf, criado_em | `masses`: date, title, season, eucharistic_prayer, data, pptx_path, pdf_path, created_at |
 | `missas_cantos`: missa_id, momento, canto_id | `mass_songs`: mass_id, moment, song_id |
-| `RepositorioCantos` (`por_url`, `buscar`), `Correspondencia(canto, pontuacao)` | `SongRepository` (`by_url`, `search`), `Match(song, score)` |
+| `RepositorioCantos` (`por_url`, `buscar`, apelidos), `Correspondencia(canto, pontuacao)` | `SongRepository` (`add`, `get`, `by_url`, `update`, `delete`, `list_all`, `add_alias`, `aliases`, `search`), `Match(song_id, song, score)` |
+| arquivos e resumo de missa salva; erros do repositório | `MassFiles(pptx, pdf)`, `MassSummary`; `DuplicateError`, `NotFoundError` (passam a herdar de `PallottiError` quando ele existir) |
 | `RepositorioMissas` (`salvar`, `listar`, `obter`) | `MassRepository` (`save`, `list`, `get`) |
 | revisão `0001_esquema_inicial` | `0001_initial_schema` |
 
