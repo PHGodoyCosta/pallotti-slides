@@ -53,7 +53,7 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
-- (resolvido) M7-a: Cifra Club responde 403 ao httpx (HTTP/1.1 e HTTP/2, qualquer User-Agent) e 200 ao curl: bloqueio por fingerprint TLS. Opções: A) curl_cffi imitando navegador; B) curl do sistema; C) só Letras.mus.br + letra colada quando o Cifra bloquear
+- (resolvido em M7-a) bloqueio do Cifra Club: fetcher com fallback curl_cffi
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)

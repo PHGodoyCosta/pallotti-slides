@@ -11,20 +11,22 @@ import re
 from typing import Protocol
 from urllib.parse import urlparse
 
-import httpx
 from bs4 import BeautifulSoup, Tag
 from pydantic import BaseModel, ConfigDict
 
 from pallotti_slides.domain.enums import SongSource
-from pallotti_slides.domain.errors import PallottiError
 from pallotti_slides.domain.text import normalize_search
+from pallotti_slides.songs.fetcher import DownloadError, PageFetcher, default_fetcher
 
-USER_AGENT = "PallottiSlides/0.1 (gerador de slides paroquial; +https://github.com/PHGodoyCosta)"
-TIMEOUT_SECONDS = 15.0
-
-
-class DownloadError(PallottiError):
-    """The lyrics page could not be downloaded or understood; the message is for the user."""
+__all__ = [
+    "CifraClubDownloader",
+    "DownloadError",
+    "LetrasMusDownloader",
+    "LyricsDownloader",
+    "RawLyrics",
+    "clean_prolongations",
+    "strip_chords",
+]
 
 
 class RawLyrics(BaseModel):
@@ -136,36 +138,17 @@ def _path_parts(url: str) -> tuple[str, str] | None:
     return (parts[0], parts[1]) if len(parts) == 2 else None
 
 
+def _same_title(letras_title: str, other: str) -> bool:
+    """Titles match ignoring case, accents and punctuation (``other`` may be a URL slug)."""
+    return _title_key(letras_title) == _title_key(other)
+
+
+def _title_key(text: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", normalize_search(text)).split())
+
+
 def _host(url: str) -> str:
     return (urlparse(url).hostname or "").lower()
-
-
-class _PageFetcher:
-    """HTTP GET with identified User-Agent and 15 s timeout; errors become ``DownloadError``."""
-
-    def __init__(self, client: httpx.Client | None = None) -> None:
-        self._client = client or httpx.Client(follow_redirects=True)
-
-    def get(self, url: str, site: str) -> BeautifulSoup:
-        try:
-            response = self._client.get(
-                url,
-                headers={"User-Agent": USER_AGENT, "Accept-Language": "pt-BR,pt;q=0.9"},
-                timeout=TIMEOUT_SECONDS,
-            )
-        except httpx.HTTPError as error:
-            raise DownloadError(
-                f"Não foi possível acessar o {site} (sem conexão ou site fora do ar). "
-                "Verifique a internet ou cole a letra."
-            ) from error
-        if response.status_code == 404:
-            raise DownloadError(f"A página não foi encontrada no {site}: {url}")
-        if response.status_code != 200:
-            raise DownloadError(
-                f"O {site} recusou o acesso (erro {response.status_code}). "
-                "Tente de novo mais tarde ou cole a letra."
-            )
-        return BeautifulSoup(response.text, "html.parser")
 
 
 class LetrasMusDownloader:
@@ -173,15 +156,15 @@ class LetrasMusDownloader:
 
     SITE = "Letras.mus.br"
 
-    def __init__(self, client: httpx.Client | None = None) -> None:
-        self._fetcher = _PageFetcher(client)
+    def __init__(self, fetcher: PageFetcher | None = None) -> None:
+        self._fetcher = fetcher or default_fetcher()
 
     def supports(self, url: str) -> bool:
         host = _host(url)
         return host == "letras.mus.br" or host.endswith(".letras.mus.br")
 
     def download(self, url: str) -> RawLyrics:
-        return self.parse(self._fetcher.get(url, self.SITE), url)
+        return self.parse(BeautifulSoup(self._fetcher.get(url, self.SITE), "html.parser"), url)
 
     @staticmethod
     def parse(soup: BeautifulSoup, url: str) -> RawLyrics:
@@ -215,37 +198,43 @@ class LetrasMusDownloader:
 class CifraClubDownloader:
     """Downloads lyrics from cifraclub.com.br.
 
-    Tries the same ``artist/song`` on Letras.mus.br first (same company); it is only used when
-    its title matches the Cifra Club one (``normalize_search``), because the same slug is
-    sometimes another song. Otherwise the chord sheet is used, without chords.
+    Order: the same ``artist/song`` on Letras.mus.br first (same company), accepted only when its
+    title matches (``normalize_search``), because the same slug is sometimes another song; then
+    the Cifra Club page (``httpx``, and ``curl_cffi`` when blocked), without chords. If the site
+    cannot be reached, ``DownloadError`` asks the user to paste the lyrics.
     """
 
     SITE = "Cifra Club"
     _GENERIC_ARTISTS = frozenset({"catolicas"})
 
     def __init__(
-        self, client: httpx.Client | None = None, letras: LetrasMusDownloader | None = None
+        self, fetcher: PageFetcher | None = None, letras: LetrasMusDownloader | None = None
     ) -> None:
-        self._fetcher = _PageFetcher(client)
-        self._letras = letras or LetrasMusDownloader(client)
+        self._fetcher = fetcher or default_fetcher()
+        self._letras = letras or LetrasMusDownloader(self._fetcher)
 
     def supports(self, url: str) -> bool:
         host = _host(url)
         return host == "cifraclub.com.br" or host.endswith(".cifraclub.com.br")
 
     def download(self, url: str) -> RawLyrics:
-        soup = self._fetcher.get(url, self.SITE)
-        cifra = self.parse(soup, url)
+        letras = self._letras_equivalent(url)
         slugs = _path_parts(url)
-        if slugs is not None:
-            equivalent = f"https://www.letras.mus.br/{slugs[0]}/{slugs[1]}/"
-            try:
-                letras = self._letras.download(equivalent)
-            except DownloadError:
-                return cifra
-            if normalize_search(letras.title) == normalize_search(cifra.title):
-                return letras
+        if letras is not None and slugs is not None and _same_title(letras.title, slugs[1]):
+            return letras  # the slug already confirms the title: no Cifra Club request
+        cifra = self.parse(BeautifulSoup(self._fetcher.get(url, self.SITE), "html.parser"), url)
+        if letras is not None and _same_title(letras.title, cifra.title):
+            return letras
         return cifra
+
+    def _letras_equivalent(self, url: str) -> RawLyrics | None:
+        slugs = _path_parts(url)
+        if slugs is None:
+            return None
+        try:
+            return self._letras.download(f"https://www.letras.mus.br/{slugs[0]}/{slugs[1]}/")
+        except DownloadError:
+            return None
 
     @classmethod
     def parse(cls, soup: BeautifulSoup, url: str) -> RawLyrics:

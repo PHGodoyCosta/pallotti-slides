@@ -12,17 +12,22 @@ from bs4 import BeautifulSoup
 from pallotti_slides.domain.enums import SongSource
 from pallotti_slides.domain.models import Song
 from pallotti_slides.songs.downloaders import (
-    USER_AGENT,
     CifraClubDownloader,
     DownloadError,
     LetrasMusDownloader,
     RawLyrics,
 )
+from pallotti_slides.songs.fetcher import USER_AGENT, HttpReply, PageFetcher, httpx_transport
 from pallotti_slides.songs.parser import ChorusDetector, LyricsParser
 
 HTML = Path(__file__).resolve().parents[2] / "fixtures" / "html"
 CIFRA_FILES = sorted(p for p in (HTML / "cifra_club").glob("*.html") if "__" in p.stem)
 LETRAS_FILES = sorted((HTML / "letras_mus").glob("*.html"))
+
+
+def _fetcher() -> PageFetcher:
+    """httpx (mocked by respx) with a no-network fallback that stays blocked."""
+    return PageFetcher(httpx_transport, lambda _url: HttpReply(403, ""), pause=0.0)
 
 
 def _url(path: Path) -> str:
@@ -89,11 +94,11 @@ def test_cifra_metadata() -> None:
 def test_letras_downloader_fetches_with_identified_user_agent() -> None:
     path = LETRAS_FILES[0]
     route = respx.get(_url(path)).mock(return_value=_page(path))
-    raw = LetrasMusDownloader().download(_url(path))
+    raw = LetrasMusDownloader(_fetcher()).download(_url(path))
     assert raw.source is SongSource.LETRAS_MUS
     assert route.calls.last.request.headers["user-agent"] == USER_AGENT
-    assert LetrasMusDownloader().supports(_url(path))
-    assert not LetrasMusDownloader().supports(_url(CIFRA_FILES[0]))
+    assert LetrasMusDownloader(_fetcher()).supports(_url(path))
+    assert not LetrasMusDownloader(_fetcher()).supports(_url(CIFRA_FILES[0]))
 
 
 @respx.mock
@@ -102,7 +107,7 @@ def test_cifra_prefers_letras_when_title_matches() -> None:
     letras = HTML / "letras_mus" / "padre-zezinho__um-coracao-para-amar.html"
     respx.get(_url(cifra)).mock(return_value=_page(cifra))
     respx.get(_url(letras)).mock(return_value=_page(letras))
-    raw = CifraClubDownloader().download(_url(cifra))
+    raw = CifraClubDownloader(_fetcher()).download(_url(cifra))
     assert raw.source is SongSource.LETRAS_MUS
     assert raw.url == _url(letras)
 
@@ -115,7 +120,7 @@ def test_cifra_falls_back_when_letras_title_differs() -> None:
     respx.get(_url(other).replace("o-povo-de-deus", "um-coracao-para-amar")).mock(
         return_value=_page(other)
     )
-    raw = CifraClubDownloader().download(_url(cifra))
+    raw = CifraClubDownloader(_fetcher()).download(_url(cifra))
     assert raw.source is SongSource.CIFRA_CLUB
     assert raw.title == "Um Coração Para Amar"
     assert "Eis o que eu venho te dar" in raw.text
@@ -128,11 +133,11 @@ def test_cifra_falls_back_when_letras_is_missing_or_blocked() -> None:
     respx.get("https://www.letras.mus.br/catolicas/eis-me-aqui-senhor/").mock(
         return_value=httpx.Response(404)
     )
-    assert CifraClubDownloader().download(_url(cifra)).source is SongSource.CIFRA_CLUB
+    assert CifraClubDownloader(_fetcher()).download(_url(cifra)).source is SongSource.CIFRA_CLUB
     respx.get("https://www.letras.mus.br/catolicas/eis-me-aqui-senhor/").mock(
         side_effect=httpx.ConnectTimeout("lento")
     )
-    assert CifraClubDownloader().download(_url(cifra)).source is SongSource.CIFRA_CLUB
+    assert CifraClubDownloader(_fetcher()).download(_url(cifra)).source is SongSource.CIFRA_CLUB
 
 
 @respx.mock
@@ -142,12 +147,15 @@ def test_cifra_falls_back_when_letras_is_missing_or_blocked() -> None:
 )
 def test_network_failures_become_download_error(outcome: httpx.Response | Exception) -> None:
     url = _url(CIFRA_FILES[0])
+    respx.get(url.replace("cifraclub.com.br", "letras.mus.br")).mock(
+        return_value=httpx.Response(404)
+    )  # Letras.mus.br is tried first
     if isinstance(outcome, Exception):
         respx.get(url).mock(side_effect=outcome)
     else:
         respx.get(url).mock(return_value=outcome)
     with pytest.raises(DownloadError) as error:
-        CifraClubDownloader().download(url)
+        CifraClubDownloader(_fetcher()).download(url)
     assert "Cifra Club" in str(error.value)
 
 
@@ -156,4 +164,4 @@ def test_page_without_lyrics_is_a_download_error() -> None:
     url = "https://www.letras.mus.br/a/b/"
     respx.get(url).mock(return_value=httpx.Response(200, text="<html><body>nada</body></html>"))
     with pytest.raises(DownloadError):
-        LetrasMusDownloader().download(url)
+        LetrasMusDownloader(_fetcher()).download(url)

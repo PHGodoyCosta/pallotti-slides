@@ -69,7 +69,7 @@
 | Antes | Agora |
 |---|---|
 | `BaixadorLetra` (`suporta`, `baixar`), `LetraBruta(titulo, artista, texto, fonte, url)` | `LyricsDownloader` (`supports`, `download`), `RawLyrics(title, artist, text, source, url)` |
-| `BaixadorLetrasMus`, `BaixadorCifraClub` | `LetrasMusDownloader`, `CifraClubDownloader` (tenta o Letras equivalente só se o título bater); `DownloadError` |
+| `BaixadorLetrasMus`, `BaixadorCifraClub` | `LetrasMusDownloader`, `CifraClubDownloader` (tenta o Letras equivalente só se o título bater); `DownloadError`; `PageFetcher` (`songs/fetcher.py`: httpx → curl_cffi quando bloqueado) |
 | `AnalisadorLetra.analisar()`, `DetectorRefrao` | `LyricsParser.parse() -> tuple[Song, list[Notice]]`, `ChorusDetector.detect()`, `ChorusIds` (resposta do LLM) |
 | detecção do tipo de pedido; remoção de acordes | `detect_request_kind()` (`songs/parser.py`), `strip_chords()` (`songs/downloaders.py`) |
 | `InterpretadorPedido.interpretar()` | `RequestInterpreter.interpret()` |

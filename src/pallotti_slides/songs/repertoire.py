@@ -6,12 +6,11 @@ from collections.abc import Callable
 from typing import Any, Literal
 from urllib.parse import urlparse
 
-import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
 from pallotti_slides.domain.enums import SongMoment
 from pallotti_slides.domain.text import normalize_search
-from pallotti_slides.songs.downloaders import TIMEOUT_SECONDS, USER_AGENT, DownloadError
+from pallotti_slides.songs.fetcher import DownloadError, PageFetcher, default_fetcher
 
 __all__ = ["ProposedSong", "RepertoireImporter", "RepertoireProposal", "propose_moments"]
 
@@ -132,8 +131,13 @@ def _songbook_items(html: str) -> list[dict[str, Any]]:
 class RepertoireImporter:
     """Reads a Cifra Club songbook and proposes a moment for each song."""
 
-    def __init__(self, fetch: Callable[[str], str] | None = None) -> None:
-        self._fetch = fetch or _http_get
+    def __init__(
+        self, fetch: Callable[[str], str] | None = None, fetcher: PageFetcher | None = None
+    ) -> None:
+        shared = fetcher or default_fetcher()
+        self._fetch = fetch or (
+            lambda url: shared.get(url, "Cifra Club", advice="informe os cantos um a um")
+        )
 
     def load(self, url: str) -> RepertoireProposal:
         host = (urlparse(url).hostname or "").lower()
@@ -159,23 +163,3 @@ class RepertoireImporter:
             raise DownloadError("O repertório está vazio ou não pôde ser lido.")
         proposal = propose_moments(songs)
         return proposal.model_copy(update={"source_url": url})
-
-
-def _http_get(url: str) -> str:
-    try:
-        response = httpx.get(
-            url,
-            headers={"User-Agent": USER_AGENT, "Accept-Language": "pt-BR,pt;q=0.9"},
-            timeout=TIMEOUT_SECONDS,
-            follow_redirects=True,
-        )
-    except httpx.HTTPError as error:
-        raise DownloadError(
-            "Não foi possível acessar o Cifra Club (sem conexão ou site fora do ar)."
-        ) from error
-    if response.status_code != 200:
-        raise DownloadError(
-            f"O Cifra Club recusou o acesso (erro {response.status_code}). "
-            "Tente de novo mais tarde ou informe os cantos um a um."
-        )
-    return response.text
