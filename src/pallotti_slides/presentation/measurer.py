@@ -32,9 +32,6 @@ LINE_HEIGHT_EM = 1.2
 DESCENT_OVERHANG_EM = 0.06
 """Glyphs below the box of the last line / font size (measured 3.1 pt at 54 pt)."""
 
-SONG_BOTTOM_MARGIN_EMU = 182880
-"""Space kept free between a song body and the slide bottom (0.2")."""
-
 SUBSTITUTE_SLACK = 1.10
 """Safety factor on widths and heights when Aptos is missing and a substitute font is used."""
 
@@ -114,18 +111,6 @@ class BodyFormat:
 
 
 DEFAULT_BODY_FORMAT = BodyFormat()
-
-
-def song_area(box: Box, slide_height: int, bottom_margin: int = SONG_BOTTOM_MARGIN_EMU) -> Box:
-    """Area available to a song body: the prototype box stretched down to the slide bottom.
-
-    In the example deck (approved by the team) songs run below the body box, down to ~0.25"
-    from the slide bottom (slides 12 and 38), and the calibration requires every song slide of
-    the example to fit. So the usable height goes from the top of the box to ``bottom_margin``
-    above the slide bottom, never less than the box itself; the width is the box width.
-    """
-    height = max(box.height, slide_height - bottom_margin - box.top)
-    return Box(left=box.left, top=box.top, width=box.width, height=height)
 
 
 def _load(path: Path | None) -> _Font | None:

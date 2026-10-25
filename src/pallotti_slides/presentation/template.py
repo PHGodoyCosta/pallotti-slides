@@ -23,7 +23,6 @@ from pallotti_slides.presentation.measurer import (
     EMU_PER_POINT,
     BodyFormat,
     Box,
-    song_area,
 )
 
 TAG_PREFIX = "@pallotti"
@@ -198,14 +197,14 @@ class MassTemplate:
         return None
 
     def song_area(self, moment: SongMoment) -> Box:
-        """Area for the song body of ``moment`` (see ``measurer.song_area``)."""
+        """Area for the song body of ``moment``: the prototype's ``{{canto.texto}}`` box itself."""
         prototype = self.prototype(moment)
         if prototype is None or prototype.text_box is None:
             tag = MOMENT_TAGS[moment]
             raise TemplateError(
                 f"O modelo não tem o protótipo de canto '{tag}' com {{{{canto.texto}}}}."
             )
-        return song_area(prototype.text_box, self.slide_height)
+        return prototype.text_box
 
     def body_format(self, moment: SongMoment) -> BodyFormat:
         """Paragraph/frame settings of the song body of ``moment``."""

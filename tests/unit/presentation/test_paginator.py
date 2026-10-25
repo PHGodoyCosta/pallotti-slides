@@ -31,12 +31,18 @@ def lines(count: int, prefix: str = "Linha de teste", bold: bool = False) -> lis
     return [Line(text=f"{prefix} {n}", bold=bold) for n in range(1, count + 1)]
 
 
-def song(*stanzas: list[Line], order: list[int] | None = None) -> Song:
+def song(
+    *stanzas: list[Line], order: list[int] | None = None, choruses: frozenset[int] = frozenset()
+) -> Song:
     return Song(
         title="Teste",
         source=SongSource.MANUAL,
         stanzas=[
-            Stanza(id=i, type=StanzaType.VERSE, lines=stanza_lines)
+            Stanza(
+                id=i,
+                type=StanzaType.CHORUS if i in choruses else StanzaType.VERSE,
+                lines=stanza_lines,
+            )
             for i, stanza_lines in enumerate(stanzas, start=1)
         ],
         order=order or list(range(1, len(stanzas) + 1)),
@@ -67,6 +73,33 @@ def test_largest_size_where_every_page_fits_for_the_whole_song() -> None:
     # 5 lines * 50 = 250 > 240 (no); 5 * 48 = 240 (yes) -> 48 for every page, even the short one.
     pages = paginator(240).paginate(song(lines(2), lines(5)), BOX)
     assert [p.size_pt for p in pages] == [48, 48]
+
+
+def test_chorus_has_its_own_larger_size_common_to_all_choruses() -> None:
+    # verses: 5 lines (fit up to 48); chorus: 2 lines (fit at 54). Repeated chorus keeps 54.
+    pages = paginator(240).paginate(
+        song(
+            lines(5, "A"),
+            lines(2, "R", bold=True),
+            lines(5, "B"),
+            order=[1, 2, 3, 2],
+            choruses=frozenset({2}),
+        ),
+        BOX,
+    )
+    assert [p.size_pt for p in pages] == [48, 54, 48, 54]
+
+
+def test_all_choruses_share_the_size_of_the_longest_one() -> None:
+    pages = paginator(240).paginate(
+        song(lines(2, "A"), lines(2, "R"), lines(5, "S"), choruses=frozenset({2, 3})), BOX
+    )
+    assert [p.size_pt for p in pages] == [54, 48, 48]
+
+
+def test_chorus_never_goes_below_min_font() -> None:
+    pages = paginator(10).paginate(song(lines(1, "R"), choruses=frozenset({1})), BOX)
+    assert [p.size_pt for p in pages] == [40]
 
 
 def test_max_font_when_everything_fits() -> None:
@@ -116,7 +149,9 @@ def test_real_measurer_twelve_line_stanza(
     )
     assert [len(p.lines) for p in pages[:2]] == [6, 6]
     assert [p.lines[0].text for p in pages[:2]] == ["Linha de teste 1", "Linha de teste 7"]
-    assert len({p.size_pt for p in pages}) == 1
+    verse_sizes = {p.size_pt for p in pages if not p.lines[0].bold}
+    assert len(verse_sizes) == 1
+    assert all(40 <= p.size_pt <= 54 for p in pages)
 
 
 def test_real_measurer_sizes_of_the_reference_mass(

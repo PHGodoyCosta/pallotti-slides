@@ -8,7 +8,7 @@
 | M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
 | M2 | ✅ | 156e50e | 2026-10-24 | aprovado pelo Pedro (M2-a..d ok) |
-| M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado com ajustes (M3-fix em andamento) |
+| M3 | ✅ | 2d91d70 | 2026-10-24 | aprovado; ajustes aplicados (M3-fix) |
 | M3b | ☐ | — | 2026-10-24 | depois do M3; cache automático de cantos |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ⏸ parcial | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |

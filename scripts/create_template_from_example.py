@@ -23,6 +23,7 @@ from pathlib import Path
 from pptx import Presentation
 from pptx.shapes.autoshape import Shape
 from pptx.slide import Slide
+from pptx.util import Emu
 
 from pallotti_slides.domain.enums import SongMoment
 from pallotti_slides.domain.models import Mass
@@ -57,6 +58,13 @@ SEPARATORS: dict[SongMoment, int] = {
     SongMoment.GLORIA: 14,
     SongMoment.OFFERTORY: 35,
 }
+# Body boxes (M3-fix, approved by Pedro). The offertory prototype (and so the copies made from it:
+# communion, post-communion, recessional) gets the position/width of the other prototypes; every
+# song prototype body then goes down to BODY_BOTTOM_MARGIN_EMU above the slide bottom.
+WIDE_BODY_LEFT = 114480
+WIDE_BODY_WIDTH = 11944080
+WIDE_BODY_MOMENTS = frozenset({SongMoment.OFFERTORY})
+BODY_BOTTOM_MARGIN_EMU = 182880  # 0.2"
 SONG_SLIDES_TO_DROP = {6, 7, 8, 11, 12, 13, 16, 17, 18, 19, 37, 38, 39}
 
 # Slides that go away together when there is no second reading.
@@ -109,8 +117,13 @@ def replace_run_text(slide: Slide, number: int, old: str, new: str) -> None:
     runs[0].text = new
 
 
-def make_song_prototype(slide: Slide, number: int, moment: SongMoment) -> None:
-    """Label -> ``{{canto.rotulo}}``; body -> one paragraph with ``{{canto.texto}}``."""
+def make_song_prototype(
+    slide: Slide, number: int, moment: SongMoment, presentation_height: int
+) -> None:
+    """Label -> ``{{canto.rotulo}}``; body -> one paragraph with ``{{canto.texto}}``.
+
+    The body box is also resized (see ``WIDE_BODY_*`` and ``BODY_BOTTOM_MARGIN_EMU``).
+    """
     shapes = text_shapes(slide)
     labels = [s for s in shapes if s.text_frame.text.strip() == moment.label]
     if len(labels) != 1:
@@ -130,6 +143,13 @@ def make_song_prototype(slide: Slide, number: int, moment: SongMoment) -> None:
     for run in first.runs[1:]:
         run._r.getparent().remove(run._r)
     first.runs[0].text = "{{canto.texto}}"
+
+    # Only the xfrm of the existing box changes.
+    slide_height = int(presentation_height)
+    if moment in WIDE_BODY_MOMENTS:
+        body.left = Emu(WIDE_BODY_LEFT)
+        body.width = Emu(WIDE_BODY_WIDTH)
+    body.height = Emu(slide_height - BODY_BOTTOM_MARGIN_EMU - int(body.top or 0))
 
 
 def set_tag(slide: Slide, tag: str) -> None:
@@ -155,7 +175,7 @@ def main() -> None:
 
     # 1. Texts: song prototypes and variable fields (before copying, so copies inherit them).
     for moment, number in PROTOTYPES.items():
-        make_song_prototype(slide_of(number), number, moment)
+        make_song_prototype(slide_of(number), number, moment, int(presentation.slide_height or 0))
     for number, field, tag in TEXT_TAGS:
         replace_run_text(slide_of(number), number, values[field], f"{{{{{tag}}}}}")
 

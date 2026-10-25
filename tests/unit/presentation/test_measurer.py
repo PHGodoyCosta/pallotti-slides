@@ -17,7 +17,6 @@ from pallotti_slides.presentation.measurer import (
     BodyFormat,
     Box,
     TextMeasurer,
-    song_area,
 )
 from pallotti_slides.presentation.template import read_body_format
 
@@ -67,14 +66,21 @@ def _example_song_slides() -> list[ExampleSlide]:
 
 
 EXAMPLE_SLIDES = _example_song_slides()
+BODY_BOTTOM_MARGIN_EMU = 182_880  # 0.2"
 SLIDE_HEIGHT = int(Presentation(str(EXAMPLE_PPTX)).slide_height or 0)
+
+
+def _box_to_the_bottom(box: Box) -> Box:
+    """The example box stretched down to 0.2" above the slide bottom, as in the template."""
+    height = SLIDE_HEIGHT - BODY_BOTTOM_MARGIN_EMU - box.top
+    return Box(box.left, box.top, box.width, max(box.height, height))
 
 
 @pytest.mark.parametrize("slide", EXAMPLE_SLIDES, ids=lambda s: f"slide{s.number}")
 def test_calibration_every_song_slide_of_the_example_fits(
     measurer: TextMeasurer, slide: ExampleSlide
 ) -> None:
-    area = song_area(slide.box, SLIDE_HEIGHT)
+    area = _box_to_the_bottom(slide.box)
     assert measurer.fits(slide.lines, slide.size_pt, area, slide.body)
 
 
@@ -115,15 +121,6 @@ def test_example_slides_12_and_38_run_below_their_box(measurer: TextMeasurer) ->
     for slide in EXAMPLE_SLIDES:
         if slide.number not in (12, 38):
             assert measurer.fits(slide.lines, slide.size_pt, slide.box, slide.body)
-
-
-def test_song_area_reaches_the_slide_bottom_minus_margin() -> None:
-    box = Box(100, 1_000_000, 5_000_000, 3_000_000)
-    area = song_area(box, 6_858_000, bottom_margin=182_880)
-    assert (area.left, area.top, area.width) == (box.left, box.top, box.width)
-    assert area.bottom == 6_858_000 - 182_880
-    tall = Box(0, 0, 10, 6_858_000)
-    assert song_area(tall, 6_858_000) == tall
 
 
 def test_wrap_and_height(measurer: TextMeasurer) -> None:

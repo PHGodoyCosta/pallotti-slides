@@ -11,7 +11,7 @@ _MOMENT_LABELS: dict[str, str] = {
     "offertory": "Ofertório",
     "communion": "Comunhão",
     "post_communion": "Pós-Comunhão",
-    "recessional": "Saída",
+    "recessional": "Canto de Saída",
 }
 
 
