@@ -90,12 +90,12 @@ ferramentas funcionando.
   `pallotti-gui = "pallotti_slides.ui.app:main"`, e configurações do ruff, mypy e
   pytest (marcadores `live`, `soffice`).
 - Criar o pacote `src/pallotti_slides/` com os subpacotes vazios (`__init__.py`).
-- Mover as imagens para `src/pallotti_slides/recursos/imagens/`. As fontes
+- Mover as imagens para `src/pallotti_slides/resources/images/`. As fontes
   **não** vão junto: `src/assets/fonts/` fica onde está, ignorada pelo git (D5).
-  `LocalizadorFonte` conforme a ARQUITETURA §12.
-- `cli.py` com `pallotti --help` e `pallotti diagnostico` (versão, Python,
+  `FontLocator` conforme a ARQUITETURA §12.
+- `cli.py` com `pallotti --help` e `pallotti doctor` (versão, Python,
   soffice encontrado?, Aptos encontrada?).
-- `tests/unit/test_camadas.py`: verifica as regras de importação da
+- `tests/unit/test_layers.py`: verifica as regras de importação da
   ARQUITETURA §2.
 - Atualizar o `README.md` (como rodar, links para `docs/`) e o `.gitignore`.
 
@@ -106,7 +106,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy src
 uv run pytest
 uv run pallotti --help
-uv run pallotti diagnostico
+uv run pallotti doctor
 ```
 
 ---
@@ -116,19 +116,22 @@ uv run pallotti diagnostico
 **Objetivo:** fixar o contrato de dados (ARQUITETURA §4).
 
 **Tarefas**
-- `dominio/enums.py`, `modelos.py`, `regras.py` e `texto.py` conforme a
+- `domain/enums.py`, `models.py`, `rules.py` e `text.py` conforme a
   ARQUITETURA §4.
-- `scripts/gerar_fixture_exemplo.py`: lê o pptx do exemplo e produz
-  `tests/fixtures/missas/26tc_2026.json` (cantos com estrofes, tipo e negrito
+- `scripts/generate_example_fixture.py`: lê o pptx do exemplo e produz
+  `tests/fixtures/masses/26tc_2026.json` (cantos com estrofes, tipo e negrito
   vindos do próprio pptx). O resultado é revisado à mão e versionado.
-- Testes: validação da fixture, ida e volta em JSON, `tem_gloria_padrao` por
-  tempo, `validar_missa` (campos faltando), `nome_arquivo` igual ao do exemplo,
-  `normalizar_busca`, `Canto.sequencia()`.
+- Testes: validação da fixture, ida e volta em JSON, `default_has_gloria` por
+  tempo (falso só em Advento e Quaresma), `validate_mass` (campos faltando,
+  inclusive `mystery_of_faith`), `output_file_name` igual ao do exemplo (com e
+  sem `short_title`), `short_title_rule`, `normalize_title`
+  ("30º DOMINGO DO TEMPO COMUM" → "30° Domingo do Tempo Comum"), `next_sunday`,
+  `normalize_search`, `Song.sequence()`.
 
 **Critérios de parada**
 ```bash
-uv run pytest tests/unit/dominio -q
-uv run mypy src/pallotti_slides/dominio --strict
+uv run pytest tests/unit/domain -q
+uv run mypy src/pallotti_slides/domain --strict
 ```
 🧑 Você revisa os modelos e a fixture JSON.
 
@@ -136,23 +139,23 @@ uv run mypy src/pallotti_slides/dominio --strict
 
 ### M2 — Modelo PPTX etiquetado
 
-**Objetivo:** `recursos/modelo/modelo_missa.pptx` seguindo o
+**Objetivo:** `resources/template/mass_template.pptx` seguindo o
 [MODELO_PPTX.md](MODELO_PPTX.md).
 
 **Tarefas**
-- Script `scripts/criar_modelo_a_partir_do_exemplo.py` (pode ser descartável):
+- Script `scripts/create_template_from_example.py` (pode ser descartável):
   parte do exemplo, mantém **um** protótipo por canto, coloca as etiquetas nas
   anotações e as etiquetas `{{...}}` nos textos, e cria os protótipos novos de
   comunhão, pós-comunhão e saída copiando o protótipo do ofertório.
-- `apresentacao/modelo.py`: `ModeloMissa.carregar()`, `validar()`,
-  `oes_disponiveis()`.
-- `pallotti modelo inspecionar` e `pallotti modelo previa`.
+- `presentation/template.py`: `MassTemplate.load()`, `validate()`,
+  `available_prayers()`.
+- `pallotti template inspect` e `pallotti template preview`.
 
 **Critérios de parada**
 ```bash
-uv run pallotti modelo inspecionar          # sai com código 0, sem erros
-uv run pytest tests/unit/apresentacao/test_modelo.py -q
-uv run pallotti modelo previa --saida /tmp/previa-modelo   # PNGs gerados
+uv run pallotti template inspect            # sai com código 0, sem erros
+uv run pytest tests/unit/presentation/test_template.py -q
+uv run pallotti template preview --output /tmp/previa-modelo   # PNGs gerados
 ```
 🧑 Você abre o modelo no PowerPoint e aprova: mesma aparência do exemplo,
 etiquetas nos lugares certos, limites do bloco da OE corretos.
@@ -161,24 +164,24 @@ etiquetas nos lugares certos, limites do bloco da OE corretos.
 
 ### M3 — Motor de apresentação
 
-**Objetivo:** `Missa` → `.pptx` + `.pdf` (F8, F9, F11). É o marco de maior
+**Objetivo:** `Mass` → `.pptx` + `.pdf` (F8, F9, F11). É o marco de maior
 risco técnico.
 
 **Tarefas**
-- `medidor.py`, `paginador.py`, `planejador.py`, `xml_slides.py`, `montador.py`,
-  `pdf.py`, `previa.py` (ARQUITETURA §5).
+- `measurer.py`, `paginator.py`, `planner.py`, `slides_xml.py`, `builder.py`,
+  `pdf.py`, `preview.py` (ARQUITETURA §5).
 - Teste de calibração do medidor com os slides de canto do exemplo.
 - Teste de referência: fixture → pptx → comparação com o exemplo (sequência de
   slides e textos normalizados).
-- Fixture extra `tests/fixtures/missas/completa_9_cantos.json` com os 9
+- Fixture extra `tests/fixtures/masses/full_9_songs.json` com os 9
   momentos, um canto longo (estrofe de 12 linhas), sem 2ª leitura e com
-  `tem_gloria = falso`.
+  `has_gloria = false`.
 
 **Critérios de parada**
 ```bash
-uv run pytest tests/unit/apresentacao tests/integracao/test_exemplo.py -q
+uv run pytest tests/unit/presentation tests/integration/test_example.py -q
 uv run pytest -m soffice -q                 # gera PDF de verdade
-uv run pallotti gerar --missa tests/fixtures/missas/completa_9_cantos.json --saida /tmp/saida
+uv run pallotti generate --mass tests/fixtures/masses/full_9_songs.json --output /tmp/saida
 # validador OOXML sem erros no pptx gerado
 ```
 - O agente converte o PDF gerado em PNG e **inspeciona todas as páginas**:
@@ -193,10 +196,10 @@ uv run pallotti gerar --missa tests/fixtures/missas/completa_9_cantos.json --sai
 **Objetivo:** persistência de cantos e missas (ARQUITETURA §9).
 
 **Tarefas**
-- `banco/tabelas.py`, `sessao.py`, `repositorios.py`.
-- Alembic: `alembic.ini` na raiz, `banco/migrations/env.py` usando o
-  `metadata` de `tabelas.py`, revisão inicial `0001_esquema_inicial`.
-- `aplicar_migracoes()` chamado pelo container.
+- `db/tables.py`, `session.py`, `repositories.py`.
+- Alembic: `alembic.ini` na raiz, `db/migrations/env.py` usando o
+  `metadata` de `tables.py`, revisão inicial `0001_initial_schema`.
+- `apply_migrations()` chamado pelo container.
 - Busca aproximada com rapidfuzz (título, apelido, primeira linha).
 
 **Critérios de parada**
@@ -204,28 +207,28 @@ uv run pallotti gerar --missa tests/fixtures/missas/completa_9_cantos.json --sai
 uv run alembic upgrade head                 # em banco vazio
 uv run alembic check                        # modelos == migrações
 uv run alembic downgrade base && uv run alembic upgrade head
-uv run pytest tests/unit/banco -q
+uv run pytest tests/unit/db -q
 ```
 Testes obrigatórios: CRUD de canto; URL única; apelido único; "me chamaste" →
 canto com primeira linha "Me chamaste para caminhar…"; busca sem diferenciar
-acentos e maiúsculas; salvar e reabrir uma `Missa` sem perda.
+acentos e maiúsculas; salvar e reabrir uma `Mass` sem perda.
 
 ---
 
 ### M5 — Letras: baixar e analisar
 
-**Objetivo:** URL ou texto → `Canto` (F6).
+**Objetivo:** URL ou texto → `Song` (F6).
 
 **Tarefas**
 - Salvar o HTML real das URLs de P3 em `tests/fixtures/html/` (uma vez, com o
-  script `scripts/salvar_html.py`). Escrever à mão o `*.esperado.json` de cada
+  script `scripts/save_html.py`). Escrever à mão o `*.expected.json` de cada
   um.
-- `baixadores.py`, `analisador.py` (com `DetectorRefrao` sem LLM; o caminho com
+- `downloaders.py`, `parser.py` (com `ChorusDetector` sem LLM; o caminho com
   LLM fica desligável).
 
 **Critérios de parada**
 ```bash
-uv run pytest tests/unit/cantos -q          # sem rede (respx bloqueia)
+uv run pytest tests/unit/songs -q           # sem rede (respx bloqueia)
 ```
 Testes obrigatórios: cada HTML → estrutura igual ao esperado; nenhum acorde nos
 fixtures do Cifra Club; "(Refrão)" expandido na ordem; letra colada com estrofes
@@ -235,20 +238,20 @@ repetidas → refrão detectado.
 
 ### M6 — Extração do folheto
 
-**Objetivo:** PDF → `DadosFolheto` (F2). **Bloqueado por P1.**
+**Objetivo:** PDF → `LeafletData` (F2). **Bloqueado por P1.**
 
 **Tarefas**
-- `llm/cliente.py` (`ClienteClaude`, `ClienteLLMFalso`), `folheto/esquema.py`,
-  `prompts.py`, `extrator.py`, com cache por hash.
-- Para cada folheto: `*.esperado.json` escrito por você (ou pelo agente e
+- `llm/client.py` (`ClaudeClient`, `FakeLLMClient`), `leaflet/schema.py`,
+  `prompts.py`, `extractor.py`, com cache por hash.
+- Para cada folheto: `*.expected.json` escrito por você (ou pelo agente e
   conferido por você).
 - Gravar as respostas reais em `tests/fixtures/llm/` para os testes offline.
 
 **Critérios de parada**
 ```bash
-uv run pytest tests/unit/folheto -q                    # offline, com LLM falso
-uv run pytest -m live tests/integracao/test_folheto_live.py   # 100% dos campos-chave
-uv run pallotti folheto extrair tests/fixtures/folhetos/<um>.pdf
+uv run pytest tests/unit/leaflet -q                    # offline, com LLM falso
+uv run pytest -m live tests/integration/test_leaflet_live.py   # 100% dos campos-chave
+uv run pallotti leaflet extract tests/fixtures/leaflets/<um>.pdf
 ```
 🧑 Você confere a extração de pelo menos um folheto que **não** foi usado para
 ajustar o prompt.
@@ -260,17 +263,17 @@ ajustar o prompt.
 **Objetivo:** F4 (interpretação do texto livre) e F5.
 
 **Tarefas**
-- `interpretador.py`, `buscador_web.py`, `resolvedor.py`.
-- `pallotti cantos resolver "<texto>"` e `pallotti cantos importar --url`.
+- `interpreter.py`, `web_search.py`, `resolver.py`.
+- `pallotti songs resolve "<texto>"` e `pallotti songs import --url`.
 
 **Critérios de parada**
 ```bash
-uv run pytest tests/unit/cantos/test_resolvedor.py tests/unit/cantos/test_interpretador.py -q
-uv run pytest -m live tests/integracao/test_cantos_live.py
+uv run pytest tests/unit/songs/test_resolver.py tests/unit/songs/test_interpreter.py -q
+uv run pytest -m live tests/integration/test_songs_live.py
 ```
 Testes obrigatórios: banco antes da internet; segunda resolução sem rede
 (baixador e buscador falsos não chamados); apelido gravado; falha de rede vira
-`Aviso`; candidatos web só de domínios permitidos.
+`Notice`; candidatos web só de domínios permitidos.
 
 ---
 
@@ -279,14 +282,14 @@ Testes obrigatórios: banco antes da internet; segunda resolução sem rede
 **Objetivo:** fluxo completo sem interface (F15).
 
 **Tarefas**
-- `aplicacao/preparar_missa.py`, `gerar_missa.py`, `container.py`.
+- `application/prepare_mass.py`, `generate_mass.py`, `container.py`.
 - Completar o `cli.py` com todos os comandos da F15.
-- Registro no histórico (`RepositorioMissas`) a cada geração.
+- Registro no histórico (`MassRepository`) a cada geração.
 
 **Critérios de parada**
 ```bash
-uv run pytest tests/integracao/test_cli.py tests/integracao/test_fluxo.py -q
-uv run pallotti gerar --missa tests/fixtures/missas/26tc_2026.json --saida /tmp/saida
+uv run pytest tests/integration/test_cli.py tests/integration/test_flow.py -q
+uv run pallotti generate --mass tests/fixtures/masses/26tc_2026.json --output /tmp/saida
 ```
 Teste de ponta a ponta com fakes: folheto (LLM falso) + pedidos de canto
 (baixador falso) → pptx + pdf + registro no banco.
@@ -297,7 +300,7 @@ Teste de ponta a ponta com fakes: folheto (LLM falso) + pedidos de canto
 
 **Objetivo:** F1, F3, F7, F12, F13 e F14 em PySide6 + qfluentwidgets
 (ARQUITETURA §11). Pode ser dividido entre agentes por página **depois** que
-`janela_principal.py` e `tarefas.py` existirem.
+`main_window.py` e `tasks.py` existirem.
 
 **Sub-marcos:** M9a janela, navegação, tema, Início e Sobre · M9b Nova Missa
 (4 etapas) · M9c Biblioteca · M9d Histórico e Configurações (com diagnóstico).
@@ -327,8 +330,8 @@ missa no histórico.
 
 **Critérios de parada**
 ```bash
-uv run pallotti modelo inspecionar
-uv run pytest tests/integracao/test_oes.py -q   # gera uma missa por OE
+uv run pallotti template inspect
+uv run pytest tests/integration/test_eucharistic_prayers.py -q   # gera uma missa por OE
 ```
 🧑 Você aprova o texto de cada bloco e registra a data na tabela.
 
@@ -339,7 +342,7 @@ uv run pytest tests/integracao/test_oes.py -q   # gera uma missa por OE
 **Objetivo:** executável para a máquina da paróquia.
 
 **Tarefas**
-- Spec do PyInstaller (inclui `recursos/`, `migrations/` e os plugins Qt;
+- Spec do PyInstaller (inclui `resources/`, `migrations/` e os plugins Qt;
   **exclui** qualquer arquivo de fonte proprietária, com verificação no build).
 - Primeira execução: assistente de diagnóstico (chave de API, LibreOffice, fonte
   Aptos) com instruções de instalação.

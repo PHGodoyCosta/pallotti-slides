@@ -76,6 +76,6 @@ background, simple and light, no text.
 - Peça 4 variações e escolha mantendo a **mesma paleta** em todas.
 - Se o gerador deformar o rosto, use a opção de referência de imagem (image
   prompt / character reference) com peso alto.
-- Coloque os arquivos finais em `src/pallotti_slides/recursos/imagens/` (depois
+- Coloque os arquivos finais em `src/pallotti_slides/resources/images/` (depois
   do M0) com nomes descritivos: `icone.png`, `inicio.png`, `sobre.png`,
   `splash.png`, `vazio.png`.

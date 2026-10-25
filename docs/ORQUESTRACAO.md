@@ -10,9 +10,9 @@
 |---|---|---|---|---|
 | **Orquestrador** (você) | Claude Opus 5.5 | `high` (`xhigh` só nos casos da §5) | Lê o plano, divide marcos em tarefas, escreve briefings, revisa diffs e saídas de teste, decide, fala com o Pedro | Não implementa código de produção nem lê arquivos inteiros sem necessidade |
 | **Implementador** | Claude Sonnet 5.5 | `medium` (`high` em M1, M2, M3) | Implementa uma tarefa até os critérios de parada passarem | Não muda contratos (ARQUITETURA, MODELO_PPTX) sem aprovação |
-| **Executor mecânico** | Claude Haiku 5.5 | `low` | Formatar/lint, rodar suítes e resumir falhas, salvar HTML de fixtures, mover arquivos, atualizar `PROGRESSO.md` | Não toma decisões de design nem escreve `*.esperado.json` sozinho |
+| **Executor mecânico** | Claude Haiku 5.5 | `low` | Formatar/lint, rodar suítes e resumir falhas, salvar HTML de fixtures, mover arquivos, atualizar `PROGRESSO.md` | Não toma decisões de design nem escreve `*.expected.json` sozinho |
 
-Exceção: o núcleo do **M3** (`xml_slides.py`, `paginador.py`, `medidor.py`)
+Exceção: o núcleo do **M3** (`slides_xml.py`, `paginator.py`, `measurer.py`)
 é implementado por um subagente **Opus 5.5 `high`**. É o maior risco técnico do
 projeto.
 
@@ -123,7 +123,7 @@ arquivo está.
 |---|---|
 | Início de marco | `▶️ M3 iniciado — motor de apresentação (Opus impl.)` |
 | Marco concluído | `✅ M4 concluído — 18 testes ok, alembic check ok. Commit a1b2c3d na main.` |
-| Portão humano | `🧑 M2 aguarda sua aprovação: abrir src/pallotti_slides/recursos/modelo/modelo_missa.pptx. Responda "aprovado M2" ou comentários.` |
+| Portão humano | `🧑 M2 aguarda sua aprovação: abrir src/pallotti_slides/resources/template/mass_template.pptx. Responda "aprovado M2" ou comentários.` |
 | Dúvida bloqueante | `❓ M5: <pergunta objetiva, com opções A/B e sua recomendação>` |
 | Falha após 3 ciclos | `⚠️ M3 travado em <teste>: <causa provável em 1 linha>. Proposta: <...>` |
 | Orçamento | `⏸ 88% da janela diurna. Pausado após M7; retomo às 23h.` |

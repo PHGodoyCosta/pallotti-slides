@@ -5,8 +5,8 @@
 
 | Marco | Estado | Commit | Última atualização | Observação |
 |---|---|---|---|---|
-| M0 | ▶️ | — | 2026-10-24 | implementador Sonnet no checkout principal |
-| M1 | ☐ | — | — | perguntas antes: tempos sem Glória, título no nome do arquivo, data padrão |
+| M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
+| M1 | ▶️ | — | 2026-10-24 | perguntas respondidas; implementador Sonnet (high) |
 | M2 | ☐ | — | — | perguntas antes: fim da missa, aclamação, Santo/Cordeiro, salmo/cântico |
 | M3 | ☐ | — | — | — |
 | M4 | ☐ | — | — | — |
@@ -26,6 +26,11 @@
 - 2026-10-24 — D13: direitos autorais resolvidos; repo público, tudo versionado (Pedro, TUI)
 - 2026-10-24 — D14: commits locais na `main` pelo orquestrador, sem coautoria do Claude, sem novas branches, sem merge/push (Pedro, TUI)
 - 2026-10-24 — D15: orçamento no horário local UTC−4 (Pedro, TUI)
+- 2026-10-24 — D16: nomes de código em inglês (pacotes, arquivos, classes, funções, tabelas, valores de enum, comandos do CLI, docstrings/comentários); docs, mensagens ao usuário e etiquetas do modelo PowerPoint em português. Glossário-contrato: `docs/NOMES.md` (Pedro, TUI)
+- 2026-10-24 — M1: Glória padrão falso só no Advento e na Quaresma; demais casos pela chave editável (Pedro, TUI)
+- 2026-10-24 — M1: nome do arquivo usa título curto = regra ("Domingo"→"Dom", "do Tempo Comum"→"do T.C", resto igual) + campo `short_title` editável (Pedro, TUI)
+- 2026-10-24 — M1: data padrão da missa nova = próximo domingo (Pedro, TUI)
+- 2026-10-24 — M1: título normalizado para "30° Domingo do Tempo Comum" (iniciais maiúsculas, preposições minúsculas, símbolo °) (Pedro, TUI)
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas

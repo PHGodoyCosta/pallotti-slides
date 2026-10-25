@@ -1,12 +1,12 @@
 # Modelo PowerPoint — contrato
 
-O arquivo `src/pallotti_slides/recursos/modelo/modelo_missa.pptx` é a **única
+O arquivo `src/pallotti_slides/resources/template/mass_template.pptx` é a **única
 fonte de layout**. O programa nunca cria formas, imagens ou estilos: só mantém,
 remove, duplica e reordena slides do modelo e troca textos marcados.
 
 Qualquer pessoa pode editar o modelo **no PowerPoint** (trocar uma imagem,
 ajustar uma cor, corrigir uma resposta) sem mexer no código, desde que respeite
-as etiquetas abaixo. Depois de editar, rode `pallotti modelo inspecionar`.
+as etiquetas abaixo. Depois de editar, rode `pallotti template inspect`.
 
 ## 1. Etiqueta do slide (anotações do orador)
 
@@ -24,8 +24,16 @@ Grupos reconhecidos:
 | Grupo | Some quando |
 |---|---|
 | `canto:<momento>` | Não há canto para o momento. Momentos: `mantra`, `entrada`, `ato_penitencial`, `gloria`, `aclamacao`, `ofertorio`, `comunhao`, `pos_comunhao`, `saida`. |
-| `canto:gloria` | Também some quando `tem_gloria = falso`. |
-| `segunda_leitura` | `segunda_leitura` está vazia. |
+| `canto:gloria` | Também some quando `has_gloria = false`. |
+| `segunda_leitura` | `second_reading` está vazia. |
+
+As etiquetas ficam em português, porque a equipe as edita no PowerPoint;
+`presentation/template.py` as mapeia para os campos e enums em inglês. Os
+momentos de `canto:<momento>` e `canto=<momento>` correspondem a `SongMoment`:
+`mantra`→`MANTRA`, `entrada`→`ENTRANCE`, `ato_penitencial`→`PENITENTIAL_ACT`,
+`gloria`→`GLORIA`, `aclamacao`→`ACCLAMATION`, `ofertorio`→`OFFERTORY`,
+`comunhao`→`COMMUNION`, `pos_comunhao`→`POST_COMMUNION`,
+`saida`→`RECESSIONAL`.
 
 A **imagem separadora** que antecede um canto leva a etiqueta do grupo do canto
 (`@pallotti grupo=canto:entrada`), para sumir junto.
@@ -142,7 +150,7 @@ Um bloco só entra na lista de OEs do programa depois de aprovado aqui. O agente
 pode **montar o rascunho** de um bloco (respostas da assembleia a partir de
 fonte indicada pelo usuário), mas a aprovação é humana.
 
-## 6. Inspetor (`pallotti modelo inspecionar`)
+## 6. Inspetor (`pallotti template inspect`)
 
 Falha (código de saída ≠ 0) quando:
 - um slide tem etiqueta desconhecida ou mal formada;
@@ -153,4 +161,4 @@ Falha (código de saída ≠ 0) quando:
   para OEs sem aclamação no slide).
 
 Imprime uma tabela: nº do slide, etiqueta, campos e uma miniatura opcional
-(`--previa`).
+(`--preview`).

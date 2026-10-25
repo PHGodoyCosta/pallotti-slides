@@ -33,9 +33,9 @@ Tema visual do programa: **São Vicente Pallotti**.
 | Termo | Significado |
 |---|---|
 | **Folheto** | PDF litúrgico do domingo (ex.: folheto da CNBB) com título da celebração, leituras, salmo, preces e oração eucarística. |
-| **Modelo** | `modelo_missa.pptx`: o PowerPoint-base com todos os slides possíveis, marcados com etiquetas. Ver [MODELO_PPTX.md](MODELO_PPTX.md). |
+| **Modelo** | `mass_template.pptx`: o PowerPoint-base com todos os slides possíveis, marcados com etiquetas. Ver [MODELO_PPTX.md](MODELO_PPTX.md). |
 | **Momento** | Ponto da missa onde entra um canto: mantra, entrada, ato penitencial, glória, aclamação, ofertório, comunhão, pós-comunhão, saída. |
-| **Estrofe** | Bloco de linhas de uma letra. Tipo `verso` ou `refrão`. |
+| **Estrofe** | Bloco de linhas de uma letra. Tipo verso (`verse`) ou refrão (`chorus`). |
 | **Ordem de execução** | Sequência das estrofes como são cantadas (ex.: V1, R, V2, R). |
 | **Grupo** | Conjunto de slides do modelo que entra ou sai junto (ex.: imagem separadora + slides do canto de comunhão). |
 | **Bloco de OE** | Slides de resposta de uma Oração Eucarística específica (I, II, III…). |
@@ -53,7 +53,7 @@ A ordem é definida pelo modelo, não pelo código. Referência (exemplo de
 | 3 | Mantra | canto do usuário | sim, sem canto |
 | 4 | Canto de entrada (+ imagem separadora) | canto do usuário | sim |
 | 5 | Ato penitencial | canto do usuário | sim |
-| 6 | Glória | canto do usuário | sim, sem canto **ou** quando `tem_gloria = falso` |
+| 6 | Glória | canto do usuário | sim, sem canto **ou** quando `has_gloria = false` |
 | 7 | 1ª leitura: imagem + referência ("Ez 18,25-28") + "Palavra do Senhor" | folheto / usuário | não |
 | 8 | Salmo: número + refrão | folheto / usuário | não |
 | 9 | 2ª leitura: imagem + referência + "Palavra do Senhor" | folheto / usuário | sim, quando não há 2ª leitura |
@@ -101,7 +101,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 ### F2 — Extração do folheto (IA)
 
 **Comportamento**
-- Envia o PDF ao LLM com um esquema de saída estruturada (`DadosFolheto`) e
+- Envia o PDF ao LLM com um esquema de saída estruturada (`LeafletData`) e
   extrai:
   - título da celebração ("26º Domingo do Tempo Comum");
   - tempo litúrgico e ano litúrgico (A/B/C), se constarem;
@@ -121,7 +121,7 @@ funcionalidade só está pronta quando todos os critérios passam.
   cache pelo hash do PDF.
 
 **Aceite**
-- [ ] Para cada folheto de teste em `tests/fixtures/folhetos/`, a extração (teste
+- [ ] Para cada folheto de teste em `tests/fixtures/leaflets/`, a extração (teste
       `live`) acerta **100%** de: título, referências das leituras, número do
       salmo, refrão do salmo, refrão das preces e OE.
 - [ ] Um PDF que não é folheto retorna erro amigável, sem travar.
@@ -136,7 +136,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 **Comportamento**
 - Formulário com os mesmos campos da F2. Para a OE, uma lista com as orações
   disponíveis no modelo.
-- `tem_gloria` vem preenchido pela regra do tempo litúrgico (falso no Advento e
+- `has_gloria` vem preenchido pela regra do tempo litúrgico (falso no Advento e
   na Quaresma) e pode ser alterado (solenidades).
 
 **Aceite**
@@ -158,7 +158,7 @@ funcionalidade só está pronta quando todos os critérios passam.
   mais de 2 linhas; título nos demais casos.
 - **Texto livre**: o usuário pode colar algo como "Entrada: Me chamaste;
   Ofertório: https://…; Comunhão: Pão da vida". O LLM converte isso em
-  `PedidoCanto` por momento e **preenche o formulário**. O formulário continua
+  `SongRequest` por momento e **preenche o formulário**. O formulário continua
   sendo a fonte da verdade.
 - Momento sem canto = grupo removido da apresentação. Os cantos sugeridos no
   folheto nunca preenchem um momento sozinhos (ver F2).
@@ -183,7 +183,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 3. **Nada no banco:** busca na internet (busca web do LLM, restrita aos sites
    suportados). Retorna até 5 **candidatos** (título, artista, URL). O usuário
    confirma um; o programa baixa, analisa e salva.
-4. **Letra colada:** analisa (F6) e salva com `fonte = manual`.
+4. **Letra colada:** analisa (F6) e salva com `source = manual`.
 - O texto pedido pelo usuário vira um **apelido** do canto escolhido. Assim,
   "me chamaste" passa a achar "Te amarei, Senhor" direto no banco.
 - O LLM devolve **URLs**, nunca letras. O texto da letra sempre vem do site
@@ -202,7 +202,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 ### F6 — Estruturação da letra
 
 **Comportamento**
-- Converte o texto bruto em `Canto`: estrofes (separadas por linha em branco),
+- Converte o texto bruto em `Song`: estrofes (separadas por linha em branco),
   tipo de cada estrofe, destaque (negrito) por linha e **ordem de execução**.
 - Detecção de refrão, em ordem de prioridade:
   1. marcações do site ou do texto ("Refrão", "Ref.:", "R:", "[Refrão]");
@@ -219,7 +219,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 **Aceite**
 - [ ] Os cantos do exemplo ("Te amarei, Senhor", "Um coração para amar", Glória,
       Ato Penitencial), salvos como HTML de teste, geram exatamente a estrutura
-      esperada (`*.esperado.json`).
+      esperada (`*.expected.json`).
 - [ ] Nenhum acorde sobra no texto final dos fixtures do Cifra Club.
 
 ---
@@ -233,7 +233,7 @@ funcionalidade só está pronta quando todos os critérios passam.
     verso/refrão, marcar linhas em negrito, reordenar a execução e remover o
     canto;
   - avisos (campos faltando, refrão não identificado, Glória com
-    `tem_gloria = falso` etc.);
+    `has_gloria = false` etc.);
   - **pré-visualização** dos slides (miniaturas do PDF gerado).
 - Edições em um canto podem ser salvas no banco ("atualizar na biblioteca") ou
   valer só para esta missa.
@@ -255,11 +255,13 @@ funcionalidade só está pronta quando todos os critérios passam.
      (F9);
   4. substitui as etiquetas `{{...}}` mantendo a formatação do modelo;
   5. remove as etiquetas das anotações do orador no arquivo final.
-- Nome do arquivo: `Missa - {título abreviado} - {dd.mm.aaaa} - OE {n}.pptx`
+- Nome do arquivo: `Missa - {título curto} - {dd.mm.aaaa} - OE {n}.pptx`. O
+  título curto é editável; por padrão aplica a regra "Domingo"→"Dom" e "do
+  Tempo Comum"→"do T.C", mantendo o resto. A data é a da celebração.
   (ex.: `Missa - 26° Dom do T.C - 26.09.2026 - OE III.pptx`).
 
 **Aceite**
-- [ ] **Teste de referência:** a partir de `tests/fixtures/missas/26tc_2026.json`,
+- [ ] **Teste de referência:** a partir de `tests/fixtures/masses/26tc_2026.json`,
       a apresentação gerada tem a **mesma sequência de slides e os mesmos textos**
       do exemplo `examples/Missa - 26° Dom do T.C - 26.09.2026 - OE III.pptx`.
       Alinhamento e tamanho de fonte dos cantos podem diferir, seguindo F9.
@@ -278,16 +280,16 @@ funcionalidade só está pronta quando todos os critérios passam.
   slide repetido, como no exemplo.
 - Texto **centralizado**. Refrão em **negrito**.
 - Rótulo do momento no canto superior esquerdo (vermelho, como no modelo).
-- **Tamanho de fonte por canto**: o maior tamanho entre `fonte_max` (54 pt) e
-  `fonte_min` (40 pt), em passos de 2 pt, em que **todas** as páginas do canto
+- **Tamanho de fonte por canto**: o maior tamanho entre `max_font` (54 pt) e
+  `min_font` (40 pt), em passos de 2 pt, em que **todas** as páginas do canto
   cabem na caixa. Assim o canto inteiro fica com o mesmo tamanho e todos os
   cantos ficam na mesma faixa.
-- Estrofe com mais de `max_linhas` (6) linhas, ou que não cabe nem em
-  `fonte_min`, é dividida em páginas equilibradas, sempre entre linhas (nunca no
+- Estrofe com mais de `max_lines` (6) linhas, ou que não cabe nem em
+  `min_font`, é dividida em páginas equilibradas, sempre entre linhas (nunca no
   meio de uma linha).
 - A medição usa as métricas reais da fonte do modelo (Aptos), incluindo quebra
   automática de linha.
-- `fonte_min`, `fonte_max` e `max_linhas` ficam nas Configurações.
+- `min_font`, `max_font` e `max_lines` ficam nas Configurações.
 
 **Aceite**
 - [ ] **Calibração:** o medidor diz que todos os slides de canto do exemplo cabem
@@ -350,7 +352,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 ### F13 — Histórico de missas
 
 **Comportamento**
-- Cada geração salva a `Missa` completa (JSON) e os caminhos dos arquivos.
+- Cada geração salva a `Mass` completa (JSON) e os caminhos dos arquivos.
 - É possível reabrir (para corrigir e gerar de novo) e **duplicar** (usar como
   ponto de partida para o domingo seguinte).
 
@@ -366,7 +368,7 @@ funcionalidade só está pronta quando todos os critérios passam.
 - Pasta de saída padrão.
 - Caminho do LibreOffice (detectado automaticamente; editável).
 - Caminho do modelo `.pptx` (padrão: o que vem com o programa).
-- Tipografia: `fonte_min`, `fonte_max`, `max_linhas`.
+- Tipografia: `min_font`, `max_font`, `max_lines`.
 - Tema claro/escuro/sistema.
 
 **Aceite**
@@ -381,13 +383,13 @@ funcionalidade só está pronta quando todos os critérios passam.
 Tudo o que a interface faz pode ser feito sem interface gráfica:
 
 ```
-pallotti gerar --missa missa.json --saida ./saida          # JSON → pptx + pdf
-pallotti folheto extrair folheto.pdf > dados.json          # F2
-pallotti cantos resolver "me chamaste"                     # F5
-pallotti cantos importar --url https://www.letras.mus.br/...
-pallotti modelo inspecionar                                # lista slides, etiquetas e problemas
-pallotti modelo previa --saida ./previa                    # gera PNGs de cada slide
-pallotti diagnostico                                       # F14 (diagnóstico)
+pallotti generate --mass mass.json --output ./saida        # JSON → pptx + pdf
+pallotti leaflet extract leaflet.pdf > data.json           # F2
+pallotti songs resolve "me chamaste"                       # F5
+pallotti songs import --url https://www.letras.mus.br/...
+pallotti template inspect                                  # lista slides, etiquetas e problemas
+pallotti template preview --output ./previa                # gera PNGs de cada slide
+pallotti doctor                                            # F14 (diagnóstico)
 ```
 
 **Aceite**
