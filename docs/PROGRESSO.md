@@ -9,9 +9,9 @@
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
 | M2 | ▶️ | — | 2026-10-24 | Sonnet high; padrões provisórios (M2-a..d) até o portão |
 | M3 | ☐ | — | — | — |
-| M4 | ✅ | (este commit) | 2026-10-24 | 11 testes db; alembic check ok |
+| M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ⏸ | — | 2026-10-24 | aguarda P3 |
-| M6 | ▶️ | — | 2026-10-24 | só parte offline (sem P2); 1 folheto (P1 parcial), pedir mais 1–2 |
+| M6 | 🧑 parcial | (este commit) | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
 | M7 | ☐ | — | — | — |
 | M8 | ☐ | — | — | — |
 | M9 | ☐ | — | — | — |
@@ -35,7 +35,8 @@
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
-- Dívida: criar `PallottiError` (domain/errors.py) e fazer `DuplicateError`/`NotFoundError` do db herdarem dele
+- M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
+- M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)
 - P2: `ANTHROPIC_API_KEY` (testes live M6/M7)
 - P3: URLs de cantos (M5)

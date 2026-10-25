@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from pallotti_slides.domain.enums import EucharisticPrayer, SongMoment
+from pallotti_slides.domain.errors import PallottiError
 from pallotti_slides.domain.models import Mass, Song, Stanza
 from pallotti_slides.domain.text import normalize_search
 
@@ -23,11 +24,11 @@ EXACT_SCORE = 100.0
 MIN_FUZZY_SCORE = 60.0
 
 
-class DuplicateError(ValueError):
+class DuplicateError(PallottiError, ValueError):
     """A unique value (song URL or alias) already exists."""
 
 
-class NotFoundError(LookupError):
+class NotFoundError(PallottiError, LookupError):
     """The requested row does not exist."""
 
 

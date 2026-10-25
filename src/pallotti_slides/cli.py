@@ -2,10 +2,16 @@
 
 import platform
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from pallotti_slides import __version__
+from pallotti_slides.application.leaflet_extraction import (
+    PallottiError,
+    extract_leaflet,
+    make_leaflet_extractor,
+)
 from pallotti_slides.config import FontLocator, locate_soffice
 
 app = typer.Typer(
@@ -14,6 +20,10 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
+
+
+leaflet_app = typer.Typer(help="Folheto litúrgico (PDF).", no_args_is_help=True)
+app.add_typer(leaflet_app, name="leaflet")
 
 
 def _line(label: str, path: Path | None, hint: str) -> str:
@@ -46,3 +56,41 @@ def diagnose() -> None:
     font_hint = "Instale a Aptos (download gratuito da Microsoft) ou defina PALLOTTI_FONTS_DIR."
     typer.echo(_line("Aptos regular", fonts.regular, font_hint))
     typer.echo(_line("Aptos negrito", fonts.bold, font_hint))
+
+
+_LEAFLET_FIELDS = (
+    ("Título", "title"),
+    ("Data", "date"),
+    ("Tempo litúrgico", "season"),
+    ("Ano", "year"),
+    ("1ª leitura", "first_reading"),
+    ("Salmo", "psalm_number"),
+    ("Refrão do salmo", "psalm_refrain"),
+    ("2ª leitura", "second_reading"),
+    ("Evangelho", "gospel"),
+    ("Refrão das preces", "intercessions_response"),
+    ("Oração eucarística", "eucharistic_prayer"),
+    ("Mistério da fé", "mystery_of_faith"),
+)
+
+
+@leaflet_app.command(
+    "extract",
+    help="Extrai os dados do folheto (PDF) com IA. Precisa da chave da API da Anthropic.",
+)
+def extract_leaflet_command(
+    pdf: Annotated[
+        Path, typer.Argument(help="Arquivo PDF do folheto.", exists=True, dir_okay=False)
+    ],
+) -> None:
+    """Extract leaflet data and print it; exit code 1 on a fatal error."""
+    try:
+        result = extract_leaflet(pdf, make_leaflet_extractor())
+    except PallottiError as error:
+        typer.echo(f"Erro: {error}", err=True)
+        raise typer.Exit(code=1) from error
+    for label, attribute in _LEAFLET_FIELDS:
+        value = getattr(result.data, attribute)
+        typer.echo(f"{label}: {value if value not in (None, '') else '(não encontrado)'}")
+    for notice in result.notices:
+        typer.echo(f"[{notice.level}] {notice.message}", err=True)

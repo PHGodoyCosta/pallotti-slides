@@ -89,7 +89,7 @@
 | `missas`: data, titulo, tempo, oracao_eucaristica, dados, arquivo_pptx, arquivo_pdf, criado_em | `masses`: date, title, season, eucharistic_prayer, data, pptx_path, pdf_path, created_at |
 | `missas_cantos`: missa_id, momento, canto_id | `mass_songs`: mass_id, moment, song_id |
 | `RepositorioCantos` (`por_url`, `buscar`, apelidos), `Correspondencia(canto, pontuacao)` | `SongRepository` (`add`, `get`, `by_url`, `update`, `delete`, `list_all`, `add_alias`, `aliases`, `search`), `Match(song_id, song, score)` |
-| arquivos e resumo de missa salva; erros do repositório | `MassFiles(pptx, pdf)`, `MassSummary`; `DuplicateError`, `NotFoundError` (passam a herdar de `PallottiError` quando ele existir) |
+| arquivos e resumo de missa salva; erros do repositório | `MassFiles(pptx, pdf)`, `MassSummary`; `DuplicateError`, `NotFoundError` (herdam de `PallottiError`) |
 | `RepositorioMissas` (`salvar`, `listar`, `obter`) | `MassRepository` (`save`, `list`, `get`) |
 | revisão `0001_esquema_inicial` | `0001_initial_schema` |
 
@@ -103,6 +103,7 @@
 | `Tarefa` (sinais `concluida`, `falhou`, `progresso`), `EditorCanto` | `Task` (`finished`, `failed`, `progress`), `SongEditor` |
 | `Caminhos(dados, config, logs)`, `Configuracoes`, `ConfigTipografia(fonte_min, fonte_max, max_linhas)`, `LocalizadorFonte` | `Paths(data, config, logs)`, `Settings`, `TypographyConfig(min_font, max_font, max_lines)`, `FontLocator` |
 | `ErroPallotti`, `ErroLLM`, `ErroDownload`, `ErroModelo`, `ErroConversaoPdf` | `PallottiError`, `LLMError`, `DownloadError`, `TemplateError`, `PdfConversionError` |
+| onde ficam os erros | `domain/errors.py` (`PallottiError`), `llm/errors.py` (`LLMError`), `leaflet/errors.py` (`LeafletError`), `db/repositories.py` (`DuplicateError`, `NotFoundError`) |
 | `PALLOTTI_FONTES_DIR`, `PALLOTTI_DB_URL` | `PALLOTTI_FONTS_DIR`, `PALLOTTI_DB_URL` |
 
 ## CLI
