@@ -111,10 +111,8 @@ funcionalidade só está pronta quando todos os critérios passam.
   - oração eucarística indicada (I, II, III…);
   - texto da aclamação do mistério da fé, como escrito no folheto (varia
     conforme o rito e a oração eucarística).
-- O folheto traz **cantos sugeridos**, mas eles **não** são usados por padrão:
-  os cantos vêm sempre do usuário (F4). Só quando o usuário pedir
-  expressamente ("usar os cantos do folheto") os sugeridos viram pedidos de
-  canto (detalhes definidos no M6/M7, com perguntas ao usuário).
+- O folheto traz **cantos sugeridos**, mas eles **nunca** são extraídos nem
+  usados: os cantos vêm só do que o usuário informar (F4).
 - Campo não encontrado volta **vazio**, nunca inventado. O usuário é avisado de
   quais campos faltam.
 - Pode-se usar o mesmo folheto de novo sem nova chamada: o resultado fica em
@@ -161,7 +159,7 @@ funcionalidade só está pronta quando todos os critérios passam.
   `SongRequest` por momento e **preenche o formulário**. O formulário continua
   sendo a fonte da verdade.
 - Momento sem canto = grupo removido da apresentação. Os cantos sugeridos no
-  folheto nunca preenchem um momento sozinhos (ver F2).
+  folheto são ignorados (ver F2).
 
 **Aceite**
 - [ ] A detecção de tipo acerta nos casos de teste (URL, título, letra com

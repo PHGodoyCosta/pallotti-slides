@@ -7,8 +7,8 @@
 |---|---|---|---|---|
 | M0 | ✅ | 6c7d744 | 2026-10-24 | 29 testes; `pallotti doctor` ok |
 | M1 | ✅ | bc8879e | 2026-10-24 | aprovado pelo Pedro (TUI) |
-| M2 | 🧑 aguardando | (este commit) | 2026-10-24 | abrir resources/template/mass_template.pptx; confirmar M2-a..d |
-| M3 | ☐ | — | — | — |
+| M2 | ✅ | 156e50e | 2026-10-24 | aprovado pelo Pedro (M2-a..d ok) |
+| M3 | ▶️ | — | 2026-10-24 | Opus high, worktree pallotti-wt/M3; parte do modelo M2 ainda provisório |
 | M4 | ✅ | ef4d40f | 2026-10-24 | 11 testes db; alembic check ok |
 | M5 | ⏸ parcial | 182c38f | 2026-10-24 | M5a ok (parser, refrão, acordes); M5b downloaders + HTML aguardam P3 |
 | M6 | 🧑 parcial | af28f72 | 2026-10-24 | parte offline ok; conferir 30tc_2026.expected.json; live aguarda P2; pedir mais 1–2 folhetos |
@@ -32,6 +32,13 @@
 - 2026-10-24 — M1: data padrão da missa nova = próximo domingo (Pedro, TUI)
 - 2026-10-24 — M1: título normalizado para "30° Domingo do Tempo Comum" (iniciais maiúsculas, preposições minúsculas, símbolo °) (Pedro, TUI)
 - 2026-10-24 — M1 aprovado (Pedro, TUI). Títulos dos cantos da fixture e rótulos Comunhão/Pós-Comunhão/Saída ainda a confirmar
+- 2026-10-24 — M2 aprovado, inclusive fim da missa, OE III 47–60, rótulos e aclamação/Santo/Cordeiro/salmo (Pedro, TUI)
+- 2026-10-24 — M1-a: títulos reais na fixture: entrada "Te Amarei Senhor" (Pedro); ofertório "Um Coração para Amar" (do SPEC F6)
+- 2026-10-24 — M6-a: cantos do folheto nunca são extraídos; só os que o usuário informar (Pedro, TUI)
+- 2026-10-24 — M6-b: suportar todas as Orações Eucarísticas (lista a confirmar) (Pedro, TUI)
+- 2026-10-24 — M6-c: referências bíblicas sempre abreviadas ("Mt 22,34-40") (Pedro, TUI)
+- 2026-10-24 — LLM: OpenAI e Anthropic; usuário escolhe o padrão e a chave nas Configurações (Pedro, TUI) — desenho a confirmar
+- 2026-10-24 — Toda pergunta no chat também vai para o Telegram (Pedro, TUI)
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas

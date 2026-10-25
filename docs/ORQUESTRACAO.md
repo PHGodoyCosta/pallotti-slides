@@ -129,6 +129,10 @@ arquivo está.
 | Orçamento | `⏸ 88% da janela diurna. Pausado após M7; retomo às 23h.` |
 | Resumo | Ao fim de cada sessão de trabalho: marcos ✅/⏸/▶️ e próximos passos, em até 6 linhas |
 
+Toda pergunta ou pendência feita no chat do Hermes também vai, resumida, para o
+Telegram (o Pedro pode não estar olhando o chat). Mantenha a conversa enxuta
+(contexto pequeno): detalhes em arquivo, não no chat.
+
 Respostas do Pedro pelo Telegram valem como aprovação ou decisão. Registre-as em
 `PROGRESSO.md`, com data.
 
