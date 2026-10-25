@@ -44,9 +44,12 @@
 - 2026-10-24 — M3b: biblioteca de pptx (uma OE por arquivo; cache automático por canto, regenerado se letra/tipografia mudar); M3 termina como está (Pedro, TUI)
 - 2026-10-24 — D6: provedor padrão OpenAI; D7: todas as OEs do Missal 3ª ed., lista confirmada no M10 (Pedro, TUI)
 - 2026-10-24 — M3 aprovado com ajustes: rótulo "Canto de Saída"; refrão curto com fonte maior; texto nunca vaza, centralizado e grande; caixas do corpo alargadas (M3-b) e estendidas até perto do pé do slide, voltando à regra "a caixa define a área" (M3-a) (Pedro, TUI)
+- 2026-10-25 — Missa de 25/10 gerada (OE DC IV) em ~/Documentos/Missa-25-10-2026 a partir do folheto e da playlist do Cifra Club; respostas da OE DC IV fornecidas pelo Pedro
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
+- M5b: strip_chords não remove linhas de acordes com caractere invisível \u200b (HTML do Cifra Club); rótulos [Intro]/[Primeira Parte]/"Parte 1 de 2" e sílabas esticadas ("liberta..dos") precisam de limpeza. Visto na missa de 25/10
+- Playlist de 25/10 sem Mantra e sem Aclamação: slides removidos; confirmar com o Pedro se é o normal
 - M5b: rótulos de seção do Cifra Club ("[Intro]", "[Primeira Parte]") — decidir com o HTML real; letra de estrofe única sem marcação sai como verso + aviso
 - M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
