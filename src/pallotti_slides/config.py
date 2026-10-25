@@ -11,6 +11,7 @@ import sys
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from platformdirs import user_config_dir, user_data_dir, user_log_dir
 from pydantic import BaseModel, ValidationError
@@ -41,12 +42,34 @@ class Paths:
         )
 
 
+@dataclass(frozen=True)
+class TypographyConfig:
+    """Song typography (SPEC F9): one size per song, from ``max_font`` down to ``min_font``."""
+
+    min_font: int = 40
+    max_font: int = 54
+    max_lines: int = 6
+
+    def __post_init__(self) -> None:
+        if not 0 < self.min_font <= self.max_font:
+            raise ValueError("min_font deve ser positivo e menor ou igual a max_font")
+        if self.max_lines < 1:
+            raise ValueError("max_lines deve ser pelo menos 1")
+
+
 class Settings(BaseModel):
     """User settings saved as JSON. API keys never go here (they live in the keyring)."""
 
     llm_provider: str = "openai"
     openai_model: str = "gpt-6-astra"
     anthropic_model: str = "claude-opus-5-5"
+    theme: Literal["system", "light", "dark"] = "system"
+    accent_color: str = "#7A1F2B"
+    output_dir: Path | None = None
+    soffice_path: Path | None = None
+    template_path: Path | None = None
+    fonts_dir: Path | None = None
+    typography: TypographyConfig = TypographyConfig()
 
 
 def load_settings(path: Path | None = None) -> Settings:
@@ -72,21 +95,6 @@ def default_db_url(paths: Paths | None = None, env: Mapping[str, str] | None = N
         return from_env
     data = (paths or Paths.default()).data
     return f"sqlite:///{(data / 'pallotti.db').as_posix()}"
-
-
-@dataclass(frozen=True)
-class TypographyConfig:
-    """Song typography (SPEC F9): one size per song, from ``max_font`` down to ``min_font``."""
-
-    min_font: int = 40
-    max_font: int = 54
-    max_lines: int = 6
-
-    def __post_init__(self) -> None:
-        if not 0 < self.min_font <= self.max_font:
-            raise ValueError("min_font deve ser positivo e menor ou igual a max_font")
-        if self.max_lines < 1:
-            raise ValueError("max_lines deve ser pelo menos 1")
 
 
 @dataclass(frozen=True)

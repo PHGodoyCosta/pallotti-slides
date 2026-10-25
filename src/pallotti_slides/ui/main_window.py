@@ -4,19 +4,29 @@ from typing import cast
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
+from qfluentwidgets import FluentIcon, FluentWindow, InfoBar, NavigationItemPosition
 
 from pallotti_slides.application.container import Container
+from pallotti_slides.application.mass_history import MassHistory
+from pallotti_slides.application.settings_service import SettingsService
+from pallotti_slides.domain.models import Mass
 from pallotti_slides.ui.assets import image_path
 from pallotti_slides.ui.pages.about import AboutPage
+from pallotti_slides.ui.pages.history import HistoryPage
 from pallotti_slides.ui.pages.home import HomePage
 from pallotti_slides.ui.pages.placeholder import PlaceholderPage
+from pallotti_slides.ui.pages.settings import SettingsPage
 
 
 class MainWindow(FluentWindow):  # type: ignore[misc]
     """Início, Nova Missa, Biblioteca, Histórico; Configurações and Sobre at the bottom."""
 
-    def __init__(self, container: Container, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        container: Container,
+        parent: QWidget | None = None,
+        settings_service: SettingsService | None = None,
+    ) -> None:
         super().__init__(parent)
         self.container = container
         self.setWindowTitle("Pallotti Slides")
@@ -27,8 +37,10 @@ class MainWindow(FluentWindow):  # type: ignore[misc]
         self.home_page = HomePage()
         self.new_mass_page = PlaceholderPage("Nova Missa", "new-mass-page")
         self.library_page = PlaceholderPage("Biblioteca", "library-page")
-        self.history_page = PlaceholderPage("Histórico", "history-page")
-        self.settings_page = PlaceholderPage("Configurações", "settings-page")
+        self.history_page = HistoryPage(MassHistory(container.mass_repo))
+        self.settings_page = SettingsPage(
+            settings_service or SettingsService(container.paths.config)
+        )
         self.about_page = AboutPage()
 
         self.addSubInterface(self.home_page, FluentIcon.HOME, "Início")
@@ -44,6 +56,18 @@ class MainWindow(FluentWindow):  # type: ignore[misc]
 
         self.home_page.new_mass_requested.connect(lambda: self.show_page(self.new_mass_page))
         self.home_page.history_requested.connect(lambda: self.show_page(self.history_page))
+        self.history_page.mass_requested.connect(self._load_mass)
+
+    def _load_mass(self, mass: Mass, duplicate: bool) -> None:
+        """Hand a Mass from the history to the Nova Missa page (when it can receive one)."""
+        loader = getattr(self.new_mass_page, "load_mass", None)
+        if loader is None:
+            InfoBar.warning(
+                "Histórico", "A tela Nova Missa ainda não pode abrir missas.", parent=self
+            )
+            return
+        loader(mass, duplicate)
+        self.show_page(self.new_mass_page)
 
     def show_page(self, page: QWidget) -> None:
         """Switch to ``page`` (keeps the navigation highlight in sync)."""
