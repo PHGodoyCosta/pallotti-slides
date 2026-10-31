@@ -43,6 +43,18 @@ def first_slide_with(presentation: PresentationType, text: str) -> Slide:
     raise AssertionError(f"no slide with {text!r}")
 
 
+def slide_text(slide: Slide) -> str:
+    """Every run of the slide joined, as the assembly reads it ("R: Amém!")."""
+    runs = [
+        run.text
+        for shape in slide.shapes
+        if shape.has_text_frame
+        for paragraph in shape.text_frame.paragraphs
+        for run in paragraph.runs
+    ]
+    return " ".join("".join(runs).replace("\xa0", " ").split())
+
+
 def slide_with_tag(presentation: PresentationType, tag: str) -> Slide:
     for slide in presentation.slides:
         if slide.has_notes_slide and slide.notes_slide.notes_text_frame.text == f"@pallotti {tag}":
@@ -115,19 +127,34 @@ def test_second_reading_group_holds_the_reading_slides(template: MassTemplate) -
 
 
 def test_prayer_blocks_come_from_the_prayers_folder(template: MassTemplate) -> None:
-    assert template.available_prayers() == [
-        EucharisticPrayer.III,
-        EucharisticPrayer.VARIOUS_NEEDS_IV,
-    ]
+    assert template.available_prayers() == list(EucharisticPrayer)  # one file per prayer
+    second = template.prayer_block(EucharisticPrayer.II)
+    assert second.path == default_prayers_dir() / "II.pptx"
+    assert len(second.slides) == 14
     third = template.prayer_block(EucharisticPrayer.III)
     assert third.path == default_prayers_dir() / "III.pptx"
     assert len(third.slides) == 14
     various = template.prayer_block(EucharisticPrayer.VARIOUS_NEEDS_IV)
     assert various.path.name == "DC_IV.pptx"
     assert len(various.slides) == 18  # 9 images + 9 responses
-    for block in (third, various):
+    children = template.prayer_block(EucharisticPrayer.CHILDREN_I)
+    assert children.path.name == "C_I.pptx"
+    assert len(children.slides) == 10  # 5 images + 5 responses
+    for block in (second, third, various, children):
         assert all(s.tag.prayer is block.prayer for s in block.slides)
         assert any("liturgy.mystery_of_faith" in s.fields for s in block.slides)
+
+
+def test_every_prayer_block_alternates_image_and_response(template: MassTemplate) -> None:
+    """Every block is a sequence of image/response pairs and ends with the Amém."""
+    for prayer in template.available_prayers():
+        block = template.prayer_block(prayer)
+        texts = [slide_text(slide) for slide in Presentation(str(block.path)).slides]
+        assert len(texts) % 2 == 0, prayer
+        assert not any(texts[::2]), prayer  # image slides have no text
+        assert all(texts[1::2]), prayer
+        assert sum(text == "{{liturgia.misterio_fe}}" for text in texts) == 1, prayer
+        assert texts[-1].startswith("R:") and texts[-1].endswith("Amém!"), prayer
 
 
 def test_template_keeps_only_the_prayer_slot(template: MassTemplate) -> None:
@@ -224,7 +251,7 @@ def test_parse_valid_tags(line: str, kind: TagKind) -> None:
         "@pallotti canto=xyz",
         "@pallotti grupo=xyz",
         "@pallotti grupo=canto:xyz",
-        "@pallotti oe=V",
+        "@pallotti oe=VI",
         "@pallotti fixo extra",
         "@pallotti canto=entrada oe=III",
     ],

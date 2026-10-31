@@ -176,7 +176,7 @@ def history_list(
         return
     for row in rows:
         typer.echo(
-            f"{row.id:>4}  {row.date:%d/%m/%Y}  OE {row.eucharistic_prayer.value:<3}  "
+            f"{row.id:>4}  {row.date:%d/%m/%Y}  OE {row.eucharistic_prayer.value:<6}  "
             f"{row.title}  {row.pptx_path or '(sem arquivo)'}"
         )
 

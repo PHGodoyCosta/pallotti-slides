@@ -14,6 +14,13 @@ _MOMENT_LABELS: dict[str, str] = {
     "recessional": "Canto de Saída",
 }
 
+#: Prefix of the prayer id -> family name shown to the user (MODELO_PPTX.md §5).
+_PRAYER_FAMILIES: dict[str, str] = {
+    "R": "Reconciliação",
+    "DC": "Diversas Circunstâncias",
+    "C": "Crianças",
+}
+
 
 class LiturgicalSeason(StrEnum):
     """Liturgical season of the celebration."""
@@ -46,20 +53,34 @@ class SongMoment(StrEnum):
 
 
 class EucharisticPrayer(StrEnum):
-    """Eucharistic prayers available in the template."""
+    """Eucharistic prayers available in the template.
+
+    Values are the tag ids (MODELO_PPTX.md §5), with a space where the file name has ``_``:
+    ``DC`` = "Diversas Circunstâncias", ``R`` = "Reconciliação", ``C`` = "Crianças".
+    """
 
     I = "I"  # noqa: E741
     II = "II"
     III = "III"
     IV = "IV"
+    V = "V"
+    RECONCILIATION_I = "R I"
+    RECONCILIATION_II = "R II"
+    VARIOUS_NEEDS_I = "DC I"
+    VARIOUS_NEEDS_II = "DC II"
+    VARIOUS_NEEDS_III = "DC III"
     VARIOUS_NEEDS_IV = "DC IV"
+    CHILDREN_I = "C I"
+    CHILDREN_II = "C II"
+    CHILDREN_III = "C III"
 
     @property
     def label(self) -> str:
         """Display text in Portuguese."""
-        if self is EucharisticPrayer.VARIOUS_NEEDS_IV:
-            return "Diversas Circunstâncias IV"
-        return self.value
+        prefix, _, number = self.value.partition(" ")
+        if not number:
+            return self.value
+        return f"{_PRAYER_FAMILIES[prefix]} {number}"
 
 
 class StanzaType(StrEnum):

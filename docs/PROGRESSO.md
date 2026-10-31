@@ -50,14 +50,17 @@
 - 2026-10-25 — Repertório por link: sempre propor momentos e pedir confirmação; chat de acompanhamento e telas de confirmação na interface (Pedro, TUI)
 - 2026-10-25 — Refrão com bloco repetido aparece uma vez entre `/*` e `*/` (Pedro, TUI)
 - 2026-10-25 — Missa de 25/10 gerada (OE DC IV) em ~/Documentos/Missa-25-10-2026 a partir do folheto e da playlist do Cifra Club; respostas da OE DC IV fornecidas pelo Pedro
+- 2026-10-30 — D7 fechada: as 14 OEs do Missal (3ª ed.) estão na pasta `eucharistic_prayers`, montadas por `scripts/create_prayer_blocks.py` a partir do PDF oficial das Orações Eucarísticas; ids no padrão atual (`R I/II`, `DC I–IV`, `C I–III`) (Pedro, TUI)
+- 2026-10-30 — OE das Crianças I: as duas aclamações do prefácio (antes do Santo) ficam fora do bloco; o slide do "Mistério da fé" continua sendo a etiqueta `{{liturgia.misterio_fe}}` também na OE V e nas das Crianças (Pedro, TUI)
+- 2026-10-30 — Os 11 blocos novos de OE aprovados depois da conferência em segunda fonte; P5 fechada (Pedro, TUI)
 - 2026-10-24 — Sem resposta, vale o padrão do PLANO §5: D2, D3, D4, D5, D6, D7, D10, D12
 
 ## Dúvidas abertas
 - Retomar: M9 portão (roteiro manual), M3b portão, M10 aguarda respostas das OEs (P5), M11 depois do M9. Barra lateral: destaque fica em Histórico ao abrir Configurações (verificar)
 - (resolvido em M7-a) bloqueio do Cifra Club: fetcher com fallback curl_cffi
-- M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). Hoje: eucharistic_prayer = null + nota. Ampliar D7?
+- M6-b: folheto 30/10 indica "OE para Diversas Circunstâncias IV" (fora do enum I–IV). **Resolvido em 2026-10-30**: o enum e a pasta têm as 14 OEs do Missal, e o prompt do folheto já aceita todas
 - M6-c: referências por extenso no folheto ("Mateus 22,34-40") gravadas abreviadas ("Mt 22,34-40"). Confirmar
 - M2-a..d, M1-a, M6-a enviadas no Telegram em 2026-10-24 22:55 (padrões aplicados enquanto isso)
 - P2: `ANTHROPIC_API_KEY` (testes live M6/M7)
 - P3: URLs de cantos (M5)
-- P5: textos validados das OEs I, II, IV (M10)
+- P5: blocos das 14 OEs aprovados por Pedro em 2026-10-30 (TUI); correção da OE V registrada em MODELO_PPTX §5

@@ -35,7 +35,7 @@ class _MassRow(CardWidget):  # type: ignore[misc]
         title = StrongBodyLabel(summary.title)
         info = BodyLabel(
             f"{summary.date.strftime('%d/%m/%Y')} · Oração Eucarística "
-            f"{summary.eucharistic_prayer.value}"
+            f"{summary.eucharistic_prayer.label}"
         )
         self.files_label = CaptionLabel(format_files(summary))
         self.open_button = PushButton(FluentIcon.FOLDER, "Abrir pasta")

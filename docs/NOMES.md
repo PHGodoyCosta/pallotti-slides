@@ -38,7 +38,7 @@
 |---|---|
 | `TempoLiturgico` ADVENTO, NATAL, QUARESMA, TRIDUO_PASCAL, PASCOA, COMUM | `LiturgicalSeason` ADVENT, CHRISTMAS, LENT, PASCHAL_TRIDUUM, EASTER, ORDINARY_TIME (`advent`, …, `ordinary_time`) |
 | `MomentoCanto` MANTRA, ENTRADA, ATO_PENITENCIAL, GLORIA, ACLAMACAO, OFERTORIO, COMUNHAO, POS_COMUNHAO, SAIDA; `.rotulo` | `SongMoment` MANTRA, ENTRANCE, PENITENTIAL_ACT, GLORIA, ACCLAMATION, OFFERTORY, COMMUNION, POST_COMMUNION, RECESSIONAL (`mantra`, `entrance`, …); `.label` → "Canto de Entrada" (texto em português) |
-| `OracaoEucaristica` I, II, III, IV | `EucharisticPrayer` I, II, III, IV |
+| `OracaoEucaristica` I, II, III, IV, V, R I/II, DC I–IV, C I–III | `EucharisticPrayer` I, II, III, IV, V, RECONCILIATION_I/II, VARIOUS_NEEDS_I–IV, CHILDREN_I–III |
 | `TipoEstrofe` VERSO, REFRAO | `StanzaType` VERSE, CHORUS (`verse`, `chorus`) |
 | `FonteCanto` LETRAS_MUS, CIFRA_CLUB, MANUAL, OUTRO | `SongSource` LETRAS_MUS, CIFRA_CLUB, MANUAL, OTHER (`letras_mus`, `cifra_club`, `manual`, `other`) |
 | `Linha(texto, negrito)` | `Line(text, bold)` |

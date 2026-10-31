@@ -148,13 +148,38 @@ Derivado dos slides de canto do exemplo:
 ## 5. Blocos de Oração Eucarística
 
 Cada OE tem o **seu próprio arquivo** em
-`src/pallotti_slides/resources/eucharistic_prayers/<id>.pptx` (`III.pptx`,
-`DC_IV.pptx`; `<id>` é o da etiqueta, sem espaço). O arquivo traz só os slides
-do bloco, em ordem, cada um com `@pallotti oe=<id>` nas anotações, e usa os
-mesmos layouts (nomes) e o mesmo tamanho de slide do modelo principal. Os
-blocos atuais foram separados do modelo por
-`scripts/create_template_from_example.py`, sem retoque. O modelo principal
-guarda só o marcador `@pallotti oe=slot` (§1).
+`src/pallotti_slides/resources/eucharistic_prayers/<id>.pptx` (`<id>` é o da
+etiqueta, sem espaço). O arquivo traz só os slides do bloco, em ordem, cada um
+com `@pallotti oe=<id>` nas anotações, e usa os mesmos layouts (nomes) e o mesmo
+tamanho de slide do modelo principal. O modelo principal guarda só o marcador
+`@pallotti oe=slot` (§1).
+
+As 14 Orações Eucarísticas do Missal (3ª edição típica) estão na pasta:
+
+| Arquivo | Id / valor do enum | Rótulo |
+|---|---|---|
+| `I.pptx` … `V.pptx` | `I`, `II`, `III`, `IV`, `V` | I … V |
+| `R_I.pptx`, `R_II.pptx` | `R I`, `R II` | Reconciliação I, II |
+| `DC_I.pptx` … `DC_IV.pptx` | `DC I` … `DC IV` | Diversas Circunstâncias I … IV |
+| `C_I.pptx` … `C_III.pptx` | `C I` … `C III` | Crianças I, II, III |
+
+O `III.pptx` e o `DC_IV.pptx` foram separados do modelo por
+`scripts/create_template_from_example.py`, sem retoque; o `II.pptx` é uma cópia
+do `III.pptx` feita por `scripts/create_prayer_ii_from_iii.py`. Os outros onze
+são montados por `scripts/create_prayer_blocks.py`, que duplica os slides do
+`III.pptx` (imagem, resposta, mistério da fé e Amém) e troca o texto das
+respostas no nível do *run*. Esse script roda antes o modo `--check`: ele remonta
+os blocos **já aprovados** (II, III e DC IV) e só escreve se o resultado bater
+com os arquivos da pasta.
+
+O **bloco só tem as respostas da assembleia**, intercaladas com a imagem da
+hóstia: uma resposta por slide, na ordem do Missal, do que vem **depois do
+Santo** (que é slide fixo do modelo) até o Amém da doxologia. As três opções de
+resposta do "Mistério da fé" viram um único slide com a etiqueta
+`{{liturgia.misterio_fe}}`, preenchida com o texto do folheto — inclusive na OE V
+e nas das Crianças, que têm aclamação própria. Na OE das Crianças I as duas
+aclamações "Glória a vós, Senhor, que tanto nos amais!" ficam no prefácio,
+**antes** do Santo, e por isso não entram no bloco.
 
 A lista de OEs do programa é a lista de arquivos da pasta: para acrescentar
 uma OE, copie um arquivo existente (para herdar o tema), troque os slides e
@@ -168,10 +193,16 @@ são preenchidas como no modelo.
 | Bloco | Estado | Fonte do texto | Aprovado por / data |
 |---|---|---|---|
 | OE III | MVP (vem do exemplo) | Exemplo 26/09/2026 | — |
-| OE I | pendente | Missal Romano 3ª ed. / folheto | — |
-| OE II | pendente | Missal Romano 3ª ed. / folheto | — |
-| OE IV | pendente | Missal Romano 3ª ed. / folheto | — |
 | OE Diversas Circunstâncias IV | pronto | respostas fornecidas pelo Pedro | Pedro, 2026-10-24 |
+| OE II | pronto | folheto "O Domingo" 02/11/2026 | Pedro, 2026-10-30 |
+| OE I, IV, V, Reconciliação I–II, Diversas Circunstâncias I–III, Crianças I–III | pronto | "Orações Eucarísticas — 3ª edição típica do Missal Romano" (PDF, 45 p.), cada bloco conferido numa segunda fonte que cita a página do Missal | Pedro, 2026-10-30 |
+
+Correção registrada na conferência: o PDF repete "Caminhamos na estrada de
+Jesus!" na OE V, onde o Missal (p. 564-568) traz "Lembrai-vos, ó Pai, da vossa
+Igreja!" como resposta ao 2C. Vale o Missal. Na OE I, as grafias "de vossos
+filhos!" e "Em comunhão com os vossos Santos vos louvamos!" seguem o PDF e as
+transcrições que citam a p. 523; há fontes com "dos vossos filhos!" e "com
+vossos Santos".
 
 Um bloco só entra na pasta depois de aprovado aqui. O agente
 pode **montar o rascunho** de um bloco (respostas da assembleia a partir de

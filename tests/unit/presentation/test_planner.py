@@ -1,5 +1,6 @@
 """BuildPlanner: which slides go into the deck, from which file and with which texts (F8)."""
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ from pallotti_slides.presentation.template import (
     MassTemplate,
     TagKind,
     TemplateSlide,
+    default_prayers_dir,
 )
 
 
@@ -145,12 +147,14 @@ def test_song_without_pages_is_removed(template: MassTemplate, mass_26tc: Mass) 
     assert "mantra" not in song_moments(plan)
 
 
-def test_prayer_missing_from_the_folder_is_an_error(
-    template: MassTemplate, mass_26tc: Mass
-) -> None:
-    liturgy = mass_26tc.liturgy.model_copy(update={"eucharistic_prayer": EucharisticPrayer.II})
+def test_prayer_missing_from_the_folder_is_an_error(tmp_path: Path, mass_26tc: Mass) -> None:
+    folder = tmp_path / "oes"
+    folder.mkdir()
+    shutil.copy(default_prayers_dir() / "III.pptx", folder / "III.pptx")
+    template = MassTemplate.load(prayers_dir=folder)
+    liturgy = mass_26tc.liturgy.model_copy(update={"eucharistic_prayer": EucharisticPrayer.IV})
     mass = mass_26tc.model_copy(update={"liturgy": liturgy})
-    with pytest.raises(TemplateError, match="Oração Eucarística II"):
+    with pytest.raises(TemplateError, match="Oração Eucarística IV"):
         BuildPlanner().plan(template, mass, one_deck_per_song(mass))
 
 
